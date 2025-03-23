@@ -12,7 +12,7 @@ onMounted(() => {
   const viewWidth = view.clientWidth;
   const viewHeight = view.clientHeight;
 
-  let cell: Cell;
+  let cells: Cell[] = [];
 
   const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -21,6 +21,12 @@ onMounted(() => {
     parent: "game-container", // Ensures Phaser attaches to the correct div
     physics: {
      default: "arcade",
+     arcade: {
+      x: 0,
+      y: 0,
+      width: viewWidth,
+      height: viewHeight,
+     }
     },
     scene: {
       preload,
@@ -34,11 +40,16 @@ onMounted(() => {
   function preload(this: Phaser.Scene) {}
 
   function create(this: Phaser.Scene) {
-    cell = new Cell(this, viewWidth, viewHeight);
+    for(var i = 0; i < 100; i++) {
+      cells.push(new Cell(this, viewWidth, viewHeight, i));
+    }
   }
 
   function update(this: Phaser.Scene) {
-    cell.update();
+    for (const cell of cells) {
+      cell.update([cells]);
+      this.physics.world.wrap(cell);
+    }
   }
 });
 </script>

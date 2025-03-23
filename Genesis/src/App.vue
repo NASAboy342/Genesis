@@ -4,10 +4,13 @@ import { useRoute } from 'vue-router';
   const route = useRoute();
 
   const isShowHomeButton = ref(false);
+  function reloadPage() {
+    window.location.reload();
+  }
 </script>
 
 <template>
-  <router-link v-if="route.name !== 'home'" class="home-button positive-button" to="/">Home</router-link>
+  <router-link v-if="route.name !== 'home'" class="home-button positive-button" to="/" :onclick="reloadPage">Home</router-link>
   <router-view ></router-view>
 </template>
 
