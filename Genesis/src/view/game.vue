@@ -6,6 +6,7 @@
 import { onMounted } from "vue";
 import Phaser from "phaser";
 import { Cell } from "@/models/cell";
+import { CellTypeEnum } from "@/models/enums/cellTypeEnum";
 
 onMounted(() => {
   const view = document.querySelector("#game-container");
@@ -13,6 +14,7 @@ onMounted(() => {
   const viewHeight = view.clientHeight;
 
   let cells: Cell[] = [];
+  let createdCellCount = 0;
 
   const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -40,16 +42,31 @@ onMounted(() => {
   function preload(this: Phaser.Scene) {}
 
   function create(this: Phaser.Scene) {
+    for(var i = 0; i < 50; i++) {
+      createdCellCount++;
+      cells.push(new Cell(this, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.plant));
+    }
     for(var i = 0; i < 100; i++) {
-      cells.push(new Cell(this, viewWidth, viewHeight, i));
+      createdCellCount++;
+      cells.push(new Cell(this, viewWidth, viewHeight, createdCellCount));
     }
   }
 
   function update(this: Phaser.Scene) {
+    clearDeadCells();
     for (const cell of cells) {
       cell.update([cells]);
       this.physics.world.wrap(cell);
     }
+
+    if(cells.filter(cell => cell.cellType === CellTypeEnum.plant).length < 50) {
+      createdCellCount++;
+      cells.push(new Cell(this, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.plant));
+    }
+  }
+
+  function clearDeadCells() {
+    cells = cells.filter(cell => cell.isAlive);
   }
 });
 </script>
@@ -61,3 +78,5 @@ onMounted(() => {
   height: 100%;
 }
 </style>
+
+
