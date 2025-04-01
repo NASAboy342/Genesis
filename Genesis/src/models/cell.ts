@@ -67,9 +67,9 @@ export class Cell extends GameObjects.Graphics {
             this.colorG = 255;
             this.colorB = 0;
         } else {
-            this.colorR = colors.length > 0 ? ColorUtils.addColorValue(colors[0], Phaser.Math.Between(-5, 5)) : Phaser.Math.Between(50, 255);
-            this.colorG = colors.length > 0 ? ColorUtils.addColorValue(colors[1], Phaser.Math.Between(-5, 5)) : Phaser.Math.Between(50, 255);
-            this.colorB = colors.length > 0 ? ColorUtils.addColorValue(colors[2], Phaser.Math.Between(-5, 5)) : Phaser.Math.Between(50, 255);
+            this.colorR = colors.length > 0 ? ColorUtils.addColorValue(colors[0], Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
+            this.colorG = colors.length > 0 ? ColorUtils.addColorValue(colors[1], Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
+            this.colorB = colors.length > 0 ? ColorUtils.addColorValue(colors[2], Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
         }
         this.color = ColorUtils.rgbToHex(this.colorR, this.colorG, this.colorB);
     }
