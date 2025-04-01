@@ -1,5 +1,11 @@
 export class ColorUtils {
     /**
+     * add addingAmount to the clolorValue and make sure it is with in 0 to 255
+     */
+    static addColorValue(colorValue: number, addingAmount: number): number {
+        return (colorValue + addingAmount) % 255
+    }
+    /**
      * Convert RGB values (0-255) to a Phaser-compatible hex color (0xRRGGBB).
      * @param r Red (0-255)
      * @param g Green (0-255)

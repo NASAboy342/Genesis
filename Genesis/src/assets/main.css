@@ -20,3 +20,19 @@ body{
 .positive-button:active{
     background-color: #45a049;
 }
+
+.negative-button {
+  padding: 10px 20px;
+  background-color: #af4c4c;
+  color: white;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.negative-button:hover{
+    background-color: #a04545;
+}
+.negative-button:active{
+    background-color: #a04545;
+}

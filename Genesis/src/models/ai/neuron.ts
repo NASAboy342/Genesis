@@ -1,18 +1,32 @@
-export class Neuron {
-  private weights: number[];
-  private bias: number;
+import { NeuronActivationTypeEnum } from "../enums/neuronActivationTypeEnum";
 
-  constructor(inputSize: number) {
+export class Neuron {
+  public weights: number[];
+  public bias: number;
+  public activationType: NeuronActivationTypeEnum;
+
+  constructor(inputSize: number = 0) {
     this.weights = Array.from(
       { length: inputSize },
       () => Math.random() * 2 - 1
     );
     this.bias = Math.random() * 2 - 1;
+    this.activationType = NeuronActivationTypeEnum.Sigmoid;
   }
 
   private activation(x: number): number {
-    // Hard Sigmoid activation function
-    return Math.max(0, Math.min(1, (x + 1) / 2));
+    switch (this.activationType) {
+      case NeuronActivationTypeEnum.HardSigmoid:
+        return Math.max(0, Math.min(1, (x + 1) / 2));
+      case NeuronActivationTypeEnum.Tanh:
+        return Math.tanh(x);
+      case NeuronActivationTypeEnum.ReLU:
+        return Math.max(0, x);
+      case NeuronActivationTypeEnum.LeakyReLU:
+        return Math.max(0.01 * x, x);
+      case NeuronActivationTypeEnum.Sigmoid:
+        return 1 / (1 + Math.exp(-x));
+    }
   }
 
 

@@ -1,6 +1,6 @@
 export class InternalClock{
     public startTime: Date;
-    public age: number;
+    public ageInSec: number;
     public cycle: number = 0.05;
     public lastCycle: number = 0;
     public constructor(){
@@ -13,11 +13,11 @@ export class InternalClock{
         this.startTime = new Date();
     }
     public aging(): void{
-        this.age = this.getAge();
+        this.ageInSec = this.getAge();
     }
     public isRecycle(){
-        if(this.age >= (this.lastCycle + this.cycle)){
-            this.lastCycle = this.age
+        if(this.ageInSec >= (this.lastCycle + this.cycle)){
+            this.lastCycle = this.ageInSec
             return true;
         }
         return false

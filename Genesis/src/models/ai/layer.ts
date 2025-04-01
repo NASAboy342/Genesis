@@ -1,10 +1,9 @@
 import { Neuron } from "./neuron";
 
 export class Layer {
-    private neurons: Neuron[];
+    public neurons: Neuron[];
   
-    constructor(inputSize: number, neuronCount: number) {
-      // Create neurons for the layer
+    constructor(inputSize: number = 0, neuronCount: number = 0) {
       this.neurons = Array.from({ length: neuronCount }, () => new Neuron(inputSize));
     }
   
