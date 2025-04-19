@@ -4,7 +4,20 @@
     <div>Cell count: {{cellCount}}</div>
     <div>Plant cell count: {{plantCellCount}}</div>
     <div>omnivoreCellCount: {{omnivoreCellCount}}</div>
+    <div>===================</div>
+    <div>Best Cell info</div>
+    <div>===================</div>
+    <div>Id: {{ bestCellId }}</div>
+    <div>Score: {{ bestCellScore }}</div>
+    <div>Age: {{ bestCellAge }}</div>
+    <div>Energy: {{ bestCellEnergy }}</div>
+    <div>Color: {{ bestCellColor }}</div>
+    <div class="positive-button" @click="handleCopyBestCellNeuralNetworkAsJson">Copy neuralNetwork</div>
+    <NeuralNetworkComponent :neural-network="bestCellNeurone" ></NeuralNetworkComponent>
   </customDialog>
+
+  <CustomDialog dialog-title="Cell Info" v-model="isCellInfoDialogVisible">
+  </CustomDialog>
   <div class="game-view" id="game-container"></div>
 </template>
 
@@ -15,12 +28,32 @@ import { Cell } from "@/models/cell";
 import { CellTypeEnum } from "@/models/enums/cellTypeEnum";
 import CustomDialog from "@/components/customDialog.vue";
 import { InternalClock } from "@/models/internalClock";
+import { NeuralNetwork, serializeNeuralNetwork } from "@/models/ai/neuralNetwork";
+import NeuralNetworkComponent from "@/components/NeuralNetworkComponent.vue";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const cellCount = ref(0);
 const plantCellCount = ref(0);
 const omnivoreCellCount = ref(0);
+const initNeuralNetworkInJsonString = ref<string>(router.currentRoute.value.query.neuralNetworkInJsonString as string || '');
+
+const bestCellId = ref(0);
+const bestCellScore = ref(0);
+const bestCellAge = ref(0);
+const bestCellEnergy = ref(0);
+const bestCellColor = ref('');
+const bestCellNeurone = ref<NeuralNetwork>(null);
+const bestCellNeuroneAsJson = ref<string>('');
 
 const isDataDialogVisible = ref(false);
+const isCellInfoDialogVisible = ref(false);
+
+const handleCopyBestCellNeuralNetworkAsJson = () => {
+  navigator.clipboard.writeText(bestCellNeuroneAsJson.value).then(() => {}, (err) => {
+    console.error('Could not copy text: ', err);
+  });
+};
 
 onMounted(() => {
   const view = document.querySelector("#game-container");
@@ -30,8 +63,12 @@ onMounted(() => {
   let cells: Cell[] = [];
   let createdCellCount = 0;
   let gameClock: InternalClock = new InternalClock();
+
   let lastPlantSpawn: number = 0;
   let plantSpawnIntervult: number = 1;
+
+  let lastBestCellCheck: number = 0;
+  let bestCellCheckInterval: number = 5;
 
   const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -60,18 +97,44 @@ onMounted(() => {
     cellCount.value = cells.length;
     plantCellCount.value = cells.filter(cell => cell.cellType === CellTypeEnum.plant).length;
     omnivoreCellCount.value = cells.filter(cell => cell.cellType === CellTypeEnum.omnivore).length;
+
+    if(gameClock.ageInSec - lastBestCellCheck > bestCellCheckInterval) {
+      lastBestCellCheck = gameClock.ageInSec;
+      bestCellId.value = cells.sort((a, b) => b.successPoints - a.successPoints)[0].id;
+    }
+    let bestCell = cells.find(cell => cell.id === bestCellId.value);
+    if(bestCell) {
+      bestCellScore.value = bestCell.successPoints;
+      bestCellAge.value = bestCell.clock.ageInSec;
+      bestCellEnergy.value = bestCell.radius;
+      bestCellColor.value = bestCell.color.toString();
+      bestCellNeurone.value = bestCell.neuronNetwork; 
+      bestCellNeuroneAsJson.value = serializeNeuralNetwork(bestCell.neuronNetwork);
+    }
   }
 
   function reloadData(scene: Phaser.Scene): void{
     cells = [];
-    for(var i = 0; i < 50; i++) {
+    createPlants(scene);
+    createCells(scene);
+  }
+
+  function createCells(scene: Phaser.Scene) {
+    for(var i=0;i<100;i++) {
+      createdCellCount++;
+      cells.push(new Cell(scene, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.omnivore, [], initNeuralNetworkInJsonString.value));
+    }
+  }
+
+  function createPlants(scene: Phaser.Scene) {
+    for(var i=0;i<50;i++) {
       createdCellCount++;
       cells.push(new Cell(scene, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.plant));
     }
-    for(var i = 0; i < 100; i++) {
-      createdCellCount++;
-      cells.push(new Cell(scene, viewWidth, viewHeight, createdCellCount));
-    }
+  }
+
+  function SetCellInfoDialogVisible(cell: Cell): any {
+    isCellInfoDialogVisible.value = true;
   }
 
   function preload(this: Phaser.Scene) {}

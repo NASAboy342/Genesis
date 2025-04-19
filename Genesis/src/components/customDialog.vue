@@ -34,11 +34,16 @@ const triggerCloseDialog = () => {
     position: relative;
     min-width: 300px;
     min-height: 200px;
+    max-height: 90vh;
     width: fit-content;
     height: fit-content;
     background-color: rgba(255, 255, 255, 0.137);
     border-radius: 10px;
     padding: 10px;
+    overflow: scroll;
+    /* hide scrol bar */
+    scrollbar-width: none; /* Firefox */
+    
 }
 .dialog-header{
     display: flex;

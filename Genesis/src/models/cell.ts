@@ -25,6 +25,7 @@ export class Cell extends GameObjects.Graphics {
     public markForInSec: number = 0;
     public lastTimeMutated: number = 0;
     public mutationIntervalInSec: number = 5;
+    public successPoints: number = 0;
 
     constructor(
         scene: Phaser.Scene, 
@@ -49,6 +50,7 @@ export class Cell extends GameObjects.Graphics {
         this.neuronNetwork = neuronNetworkInJson === "" ? new NeuralNetwork([11, 15, 10, 4, 2]) : deserializeNeuralNetwork(neuronNetworkInJson);
         this.neuronNetwork.mutate(0.5);
         this.id = id;
+        this.successPoints += neuronNetworkInJson !== "" ? 1 : 0;
     }
     draw() {
         this.clear();
@@ -105,6 +107,7 @@ export class Cell extends GameObjects.Graphics {
             sensory.cellId = closestCell.id;
             sensory.cellType = closestCell.cellType;
             sensory.isSensing = true;
+            this.successPoints += 0.00001;
         }
         return sensory;
     }
@@ -157,6 +160,7 @@ export class Cell extends GameObjects.Graphics {
                         let cell = new Cell(this.scene, 800, 600, cells.length, this.x, this.y, this.cellType, [this.colorR, this.colorG, this.colorB], serializeNeuralNetwork(this.neuronNetwork));
                         cells.push(cell);
                         this.radius = this.radius / 2;
+                        this.successPoints += 1;
                     }
                 }
             }
@@ -192,6 +196,7 @@ export class Cell extends GameObjects.Graphics {
                     let energyAfter = cell.radius;
                     this.radius += energyBefore - energyAfter;
                     this.lastTimeEaten = this.clock.ageInSec;
+                    this.successPoints += 0.1;
                 }
             }
         }

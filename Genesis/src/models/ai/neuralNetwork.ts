@@ -70,3 +70,16 @@ export function deserializeNeuralNetwork(json: string): NeuralNetwork {
     network.layers = obj.layers;
     return network;
 }
+
+export class SimpleNeuralNetwork {
+  public layers: [
+    {
+      neurons: [
+        {
+          weights: number[];
+          bias: number;
+        }
+      ];
+    }
+  ]
+}
