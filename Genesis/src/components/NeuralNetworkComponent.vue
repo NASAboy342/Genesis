@@ -10,6 +10,7 @@ import { ref, watch } from "vue";
 import { onMounted } from "vue";
 import Phaser from "phaser";
 import { ColorUtils } from "@/utils/colorUtils";
+import { MathUtils } from "@/utils/mathUtils";
 
 const props = defineProps<{ neuralNetwork: NeuralNetwork}>();
 
@@ -37,24 +38,47 @@ onMounted(() => {
 
   function create(this: Phaser.Scene) {
     props.neuralNetwork.layers.forEach((layer, index) => {
-      let layerX = 50 + index * 100;
-      let layerY = 50;
+      let marginLeft = 30;
+      let marginTop = 20;
+      let layerGap = 260;
       let layerW = 30;
-      let layerH = layer.neurons.length * 20;
+      let layerH = layer.neurons.length * 65;
+      let layerY = 0 + marginTop;
+      let layerX = marginLeft + index * (layerW + layerGap);
 
       this.add.graphics()
-        .fillStyle(ColorUtils.rgbToHex(255,255,255), 1)
+        .fillStyle(ColorUtils.rgbToHex(255,255,255), 0)
         .fillRect(layerX, layerY, layerW, layerH);
 
       layer.neurons.forEach((neuron, neuronIndex) => {
         let neuralR = 8;
-        let neuralY = (50 + (neuralR / 4)) + neuronIndex * 20;
-        let neuralCenteredX = layerX + neuralR;
+        let neuralGap = 50;
+        let neuralY = marginTop + 2 + (neuronIndex * (neuralR * 2 + neuralGap));
+        let neuralCenteredX = layerX + (layerW / 2);
         let neuralCenteredY = neuralY + neuralR;
 
         this.add.graphics()
           .fillStyle(ColorUtils.rgbToHex(0, 200, 150), 1)
-          .fillCircle(neuralCenteredX, neuralCenteredY, neuralR)
+          .fillCircle(neuralCenteredX, neuralCenteredY, neuralR);
+
+        if(index !== 0){
+          neuron.weights.forEach((weight, weightIndex) => {
+            let lineW = MathUtils.Mapto0and8(weight);
+            let lineColor = ColorUtils.rgbToHex(0, 100, 100);
+            let lineAlp = 1;
+            let lineX1 = layerX - (layerW / 2) - layerGap;
+            let lineY1 = marginTop + 8 + (weightIndex * (neuralR * 2 + neuralGap));
+            let lineX2 = neuralCenteredX;
+            let lineY2 = neuralCenteredY;
+  
+            this.add.graphics()
+            .lineStyle(lineW, lineColor, lineAlp)
+            .beginPath()
+            .moveTo(lineX1, lineY1)
+            .lineTo(lineX2, lineY2)
+            .strokePath()
+          });
+        }
       });
     });
   }
@@ -70,8 +94,8 @@ onMounted(() => {
 <style scoped>
 .game-view {
   position: relative;
-  width: 400px;
-  height: 400px;
+  width: 1000px;
+  height: 1000px;
   background-color: blueviolet;
 }
 </style>
