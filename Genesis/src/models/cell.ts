@@ -51,6 +51,7 @@ export class Cell extends GameObjects.Graphics {
         this.neuronNetwork.mutate(0.5);
         this.id = id;
         this.successPoints += neuronNetworkInJson !== "" ? 1 : 0;
+
     }
     draw() {
         this.clear();
@@ -95,7 +96,7 @@ export class Cell extends GameObjects.Graphics {
                 return sensory;
             }
 
-            sensory.angle = Phaser.Math.Angle.Between(this.x, this.y, closestCell.x, closestCell.y);
+            sensory.relativeAngle = Phaser.Math.Angle.Between(this.x, this.y, closestCell.x, closestCell.y);
             sensory.distance = Phaser.Math.Distance.Between(this.x, this.y, closestCell.x, closestCell.y);
             let color = ColorUtils.hexToRgb(closestCell.color);
             sensory.colorR = color.r;
@@ -119,7 +120,7 @@ export class Cell extends GameObjects.Graphics {
             let sensory = this.Senc(...args[0]);
             let neuronOutPut = this.neuronNetwork.feedForward(
                 [
-                    sensory.angle, 
+                    sensory.relativeAngle, 
                     sensory.distance, 
                     sensory.colorR, 
                     sensory.colorG, 
@@ -136,12 +137,29 @@ export class Cell extends GameObjects.Graphics {
                 this.handleEating(sensory,...args[0]);
                 this.handleReproduction(...args[0]);
                 this.move(dEngle, speedToMove);
+                this.handleRigidBody(sensory, ...args[0]);
                 this.clock.aging();
                 this.handleToUnMark();
         }
         
         this.draw();
         super.update(...args);
+    }
+    public handleRigidBody(sensory: CellSensory, neiborCells: Cell[] = []) {
+        if(!sensory.isSensing) return;
+        let serfaceDisten = sensory.distance - this.radius - sensory.radius;
+        let colitionThreshold = -0.5;
+        if(serfaceDisten <= colitionThreshold){
+            this.pushBack(Phaser.Math.Angle.Reverse(sensory.relativeAngle), Math.abs(serfaceDisten - colitionThreshold / 2));
+            let cell = neiborCells.find(cell => cell.id === sensory.cellId);
+            if(cell){
+                cell.pushBack(sensory.relativeAngle, Math.abs(colitionThreshold / 2));
+            }
+        }
+    }
+    public pushBack(angleToPushBack: number, distenToPush: number) {
+        this.x += distenToPush * Math.cos(angleToPushBack);
+        this.y += distenToPush * Math.sin(angleToPushBack);
     }
     public handleToUnMark() {
         if(this.isMarked) {
@@ -192,7 +210,7 @@ export class Cell extends GameObjects.Graphics {
             if(cell && cell.isAlive) {
                 if(cell.radius > 0){
                     let energyBefore = cell.radius; 
-                    cell.radius -= 1;
+                    cell.radius -= 0.05;
                     let energyAfter = cell.radius;
                     this.radius += energyBefore - energyAfter;
                     this.lastTimeEaten = this.clock.ageInSec;
@@ -264,7 +282,7 @@ export class Cell extends GameObjects.Graphics {
 }
 
 class CellSensory{
-    public angle: number = 0;
+    public relativeAngle: number = 0;
     public distance: number = 0;
     public colorR: number = 0;
     public colorG: number = 0;

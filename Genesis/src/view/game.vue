@@ -167,8 +167,11 @@ onMounted(() => {
   function clearDeadCells() {
     cells = cells.filter(cell => cell.isAlive);
   }
+
   
 });
+
+
 </script>
 
 <style scoped>
