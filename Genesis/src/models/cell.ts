@@ -212,8 +212,9 @@ export class Cell extends GameObjects.Graphics {
             if(cells){
                 if(this.radius >= this.maxRadius -1) {
                     for(let i = 0; i <= 1; i++){
-                        let cell = new Cell(this.scene, 800, 600, cells.length, this.x, this.y, this.cellType, serializeNeuralNetwork(this.neuronNetwork));
-                        cells.push(cell);
+                        let newCell = new Cell(this.scene, 800, 600, cells.length, this.x, this.y, this.cellType, serializeNeuralNetwork(this.neuronNetwork));
+                        newCell.successPoints = this.successPoints;
+                        cells.push(newCell);
                         this.radius = this.radius / 2;
                         this.successPoints += 1;
                     }

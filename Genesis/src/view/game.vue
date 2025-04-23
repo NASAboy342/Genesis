@@ -12,6 +12,7 @@
     <div>Age: {{ bestCellAge }}</div>
     <div>Energy: {{ bestCellEnergy }}</div>
     <div>Color: {{ bestCellColor }}</div>
+    <div>HighestScore: {{ highestScore }}</div>
     <div class="positive-button" @click="handleCopyBestCellNeuralNetworkAsJson">Copy neuralNetwork</div>
     <NeuralNetworkComponent :neural-network="bestCellNeurone" ></NeuralNetworkComponent>
   </customDialog>
@@ -46,12 +47,14 @@ const bestCellEnergy = ref(0);
 const bestCellColor = ref('');
 const bestCellNeurone = ref<NeuralNetwork>(null);
 const bestCellNeuroneAsJson = ref<string>('');
+const highestScore = ref(0);
+const highestScoreCellNeuralNetworkAsJson = ref<string>('');
 
 const isDataDialogVisible = ref(false);
 const isCellInfoDialogVisible = ref(false);
 
 const handleCopyBestCellNeuralNetworkAsJson = () => {
-  navigator.clipboard.writeText(bestCellNeuroneAsJson.value).then(() => {}, (err) => {
+  navigator.clipboard.writeText(highestScoreCellNeuralNetworkAsJson.value).then(() => {}, (err) => {
     console.error('Could not copy text: ', err);
   });
 };
@@ -70,10 +73,13 @@ onMounted(() => {
   let plantSpawnIntervult: number = 5;
 
   let lastBestCellCheck: number = 0;
-  let bestCellCheckInterval: number = 5;
+  let bestCellCheckInterval: number = 4.9;
 
   let lastPhotonSpawn: number = 0;
   let photonSpawnInterval: number = 0.3;
+
+  let lastPopulationCheck: number = 0;
+  let populationCheckInterval: number = 5.1;
 
   const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -115,19 +121,34 @@ onMounted(() => {
       bestCellColor.value = bestCell.color.toString();
       bestCellNeurone.value = bestCell.neuronNetwork; 
       bestCellNeuroneAsJson.value = serializeNeuralNetwork(bestCell.neuronNetwork);
+      if(bestCell.successPoints > highestScore.value){
+        highestScore.value = bestCell.successPoints;
+        highestScoreCellNeuralNetworkAsJson.value = serializeNeuralNetwork(bestCell.neuronNetwork);
+      }
     }
   }
 
   function reloadData(scene: Phaser.Scene): void{
     cells = [];
     createPlants(scene);
-    createCells(scene);
+    createCells(scene, true);
   }
 
-  function createCells(scene: Phaser.Scene) {
-    for(var i=0;i<100;i++) {
-      createdCellCount++;
-      cells.push(new Cell(scene, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.omnivore, initNeuralNetworkInJsonString.value));
+  function createCells(scene: Phaser.Scene, isFirstTimeLoad: boolean = false) {
+    if(isFirstTimeLoad) {
+      for(var i=0;i<100;i++) {
+        createdCellCount++;
+        let newCell = new Cell(scene, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.omnivore, initNeuralNetworkInJsonString.value);
+        cells.push(newCell);
+      }
+    }
+    else {
+      for(var i=0;i<100;i++) {
+        createdCellCount++;
+        let newCell = new Cell(scene, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.omnivore, highestScoreCellNeuralNetworkAsJson.value);
+        newCell.successPoints = highestScore.value;
+        cells.push(newCell);
+      }
     }
   }
 
@@ -157,6 +178,7 @@ onMounted(() => {
     checkIfToDeletePhoton();
     checkIfToSpawnPhoton(this);
     updateDisplayDate();
+    doIfTimeToCheckPopulation(this)
   }
 
   function checkIfToSpawnPlant(scene: Phaser.Scene) {
@@ -203,7 +225,22 @@ onMounted(() => {
   function checkIfToDeletePhoton() {
     photons = photons.filter(photon => photon.radius > 0);
   }
+  function doIfTimeToCheckPopulation(scene: Phaser.Scene) {
+    if(lastPopulationCheck + populationCheckInterval >= gameClock.ageInSec){
+      lastPopulationCheck = gameClock.ageInSec;
+      doIfPopulationIsTooLow(scene);
+    }
+  }
+  function doIfPopulationIsTooLow(scene: Phaser.Scene) {
+    let criticalLowPopulation = 10;
+    let omnivoreCellCount = cells.filter(cell => cell.cellType === CellTypeEnum.omnivore).length;
+    if(omnivoreCellCount <= criticalLowPopulation) {
+      createCells(scene, false)
+    }
+  }
 });
+
+
 </script>
 
 <style scoped>
