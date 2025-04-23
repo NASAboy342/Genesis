@@ -5,27 +5,26 @@ import { deserializeNeuralNetwork, NeuralNetwork, serializeNeuralNetwork } from 
 import { CellTypeEnum } from "./enums/cellTypeEnum";
 import { MathUtils } from "@/utils/mathUtils";
 import { plainToInstance } from "class-transformer";
+import { Photon } from "./photon";
 
 export class Cell extends GameObjects.Graphics {
-    public radius: number = 5;
-    public color: number;
-    public colorR: number = 0;
-    public colorG: number = 0;
-    public colorB: number = 0;
-    public isAlive: boolean = true;
-    public speed: number = 1;
-    public clock: InternalClock;
-    public neuronNetwork: NeuralNetwork;
-    public id: number;
-    public maxRadius: number = 16;
-    public cellType: CellTypeEnum;
-    public lastTimeEaten: number = 0;
-    public isMarked: boolean = false;
-    public markedOnAge: number = 0;
-    public markForInSec: number = 0;
-    public lastTimeMutated: number = 0;
-    public mutationIntervalInSec: number = 5;
-    public successPoints: number = 0;
+    radius: number = 5;
+    color: number;
+    isAlive: boolean = true;
+    speed: number = 1;
+    clock: InternalClock;
+    neuronNetwork: NeuralNetwork;
+    id: number;
+    maxRadius: number = 16;
+    cellType: CellTypeEnum;
+    lastTimeEaten: number = 0;
+    isMarked: boolean = false;
+    markedOnAge: number = 0;
+    markForInSec: number = 0;
+    lastTimeMutated: number = 0;
+    mutationIntervalInSec: number = 5;
+    successPoints: number = 0;
+    maxPlantRadius: number = 7;
 
     constructor(
         scene: Phaser.Scene, 
@@ -35,19 +34,18 @@ export class Cell extends GameObjects.Graphics {
         posistionX: number = 0,
         posistionY: number = 0,
         cellType: CellTypeEnum = CellTypeEnum.omnivore,
-        colors: number[] = [],
         neuronNetworkInJson: string = ""
     ) {
         super(scene);
         this.cellType = cellType;
         this.angle = Phaser.Math.DegToRad(0);
-        this.getColor(colors);
+        this.neuronNetwork = neuronNetworkInJson === "" ? new NeuralNetwork([11, 15, 10, 4, 2]) : deserializeNeuralNetwork(neuronNetworkInJson);
+        this.getColor();
         this.draw();
         this.addToDisplayList();
         this.x = posistionX === 0 ? Phaser.Math.Between(0, viewWidth) : posistionX;
         this.y = posistionY === 0 ? Phaser.Math.Between(0, viewHeight) : posistionY;
         this.clock = new InternalClock();
-        this.neuronNetwork = neuronNetworkInJson === "" ? new NeuralNetwork([11, 15, 10, 4, 2]) : deserializeNeuralNetwork(neuronNetworkInJson);
         this.neuronNetwork.mutate(0.5);
         this.id = id;
         this.successPoints += neuronNetworkInJson !== "" ? 1 : 0;
@@ -64,20 +62,20 @@ export class Cell extends GameObjects.Graphics {
         this.fillCircle(0, 0, this.radius);
 
     }
-    getColor(colors: number[]): void {
+    getColor(): void {
         if(this.cellType === CellTypeEnum.plant) {
-            this.colorR = 0;
-            this.colorG = 255;
-            this.colorB = 0;
+            this.neuronNetwork.colorR = 0;
+            this.neuronNetwork.colorG = 255;
+            this.neuronNetwork.colorB = 0;
         } else {
-            this.colorR = colors.length > 0 ? ColorUtils.addColorValue(colors[0], Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
-            this.colorG = colors.length > 0 ? ColorUtils.addColorValue(colors[1], Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
-            this.colorB = colors.length > 0 ? ColorUtils.addColorValue(colors[2], Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorR = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorG = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorB = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
         }
-        this.color = ColorUtils.rgbToHex(this.colorR, this.colorG, this.colorB);
+        this.color = ColorUtils.rgbToHex(this.neuronNetwork.colorR, this.neuronNetwork.colorG, this.neuronNetwork.colorB);
     }
 
-    public move(dEngle: number, speedToMove: number): void {
+    move(dEngle: number, speedToMove: number): void {
         this.angle += dEngle;
         this.speed = speedToMove;
         this.x += this.speed * Math.cos(this.angle);
@@ -113,9 +111,51 @@ export class Cell extends GameObjects.Graphics {
         return sensory;
     }
 
-    override update(...args: any[]): void {
+    update(photons: Photon[] = [],...args: any[]): void {
+        this.scene.physics.world.wrap(this);
         this.handleDeath();
-
+        this.doIfNotPlant(...args);
+        this.doIfPlant(photons, ...args[0]);
+        this.draw();
+        //super.update(...args);
+    }
+    doIfPlant(photons: Photon[] = [], cells: Cell[] = []) {
+        if(this.cellType === CellTypeEnum.plant) {
+            this.handleObsorbPhoton(photons);
+            this.handlePlantReproduction(cells);
+            this.handleRigidBodyV2(cells);
+        }
+    }
+    handleRigidBodyV2(cells: Cell[]) {
+        let touchingDistance = 0;
+        let touchingCells = cells.find(cell => cell.id !== this.id && Phaser.Math.Distance.Between(this.x, this.y, cell.x, cell.y) - this.radius - cell.radius <= touchingDistance);
+        if(touchingCells) {
+            let angle = Phaser.Math.Angle.Between(this.x, this.y, touchingCells.x, touchingCells.y);
+            let pushingDistance = Math.abs(Phaser.Math.Distance.Between(this.x, this.y, touchingCells.x, touchingCells.y) - this.radius - touchingCells.radius); 
+            this.pushBack(Phaser.Math.Angle.Reverse(angle), pushingDistance / 2);
+            touchingCells.pushBack(angle, pushingDistance / 2);
+        }
+    }
+    handlePlantReproduction(cells: Cell[] = []) {
+        if(this.radius > this.maxPlantRadius && this.isPlantCellsNotOverPopulated(cells)){
+            let newPlant = new Cell(this.scene, 0, 0 , cells.length, this.x + Phaser.Math.Between(2,5), this.y + Phaser.Math.Between(2,5), CellTypeEnum.plant, '' );
+            cells.push(newPlant);
+            this.radius = 5;
+        }
+    }
+    isPlantCellsNotOverPopulated(cells: Cell[]): boolean {
+        return cells.filter(cell => cell.cellType === CellTypeEnum.plant).length < 200;
+    }
+    handleObsorbPhoton(photons: Photon[] = []) {
+        if(this.radius < this.maxPlantRadius+1 && photons && photons.length > 0) {
+            let hittedPhoton = photons.find(photon => Phaser.Math.Distance.Between(this.x, this.y, photon.x, photon.y) - this.radius - photon.radius <= -0);
+            if(hittedPhoton) {
+                this.radius += hittedPhoton.radius;
+                hittedPhoton.radius = 0;
+            }
+        }
+    }
+    doIfNotPlant(...args: any[]) {
         if(this.cellType !== CellTypeEnum.plant) {
             let sensory = this.Senc(...args[0]);
             let neuronOutPut = this.neuronNetwork.feedForward(
@@ -125,7 +165,7 @@ export class Cell extends GameObjects.Graphics {
                     sensory.colorR, 
                     sensory.colorG, 
                     sensory.colorB, 
-                    sensory.radius, 
+                    sensory.radius,
                     sensory.isAlive ? 1 : 0, 
                     sensory.speed,
                     this.radius,
@@ -141,11 +181,8 @@ export class Cell extends GameObjects.Graphics {
                 this.clock.aging();
                 this.handleToUnMark();
         }
-        
-        this.draw();
-        super.update(...args);
     }
-    public handleRigidBody(sensory: CellSensory, neiborCells: Cell[] = []) {
+    handleRigidBody(sensory: CellSensory, neiborCells: Cell[] = []) {
         if(!sensory.isSensing) return;
         let serfaceDisten = sensory.distance - this.radius - sensory.radius;
         let colitionThreshold = -0.5;
@@ -157,11 +194,11 @@ export class Cell extends GameObjects.Graphics {
             }
         }
     }
-    public pushBack(angleToPushBack: number, distenToPush: number) {
+    pushBack(angleToPushBack: number, distenToPush: number) {
         this.x += distenToPush * Math.cos(angleToPushBack);
         this.y += distenToPush * Math.sin(angleToPushBack);
     }
-    public handleToUnMark() {
+    handleToUnMark() {
         if(this.isMarked) {
             if((this.clock.ageInSec - this.markedOnAge) > this.markForInSec) {
                 this.isMarked = false;
@@ -170,12 +207,12 @@ export class Cell extends GameObjects.Graphics {
             }
         }
     }
-    public handleReproduction(cells: Cell[] = []): void {
+    handleReproduction(cells: Cell[] = []): void {
         try{
             if(cells){
                 if(this.radius >= this.maxRadius -1) {
                     for(let i = 0; i <= 1; i++){
-                        let cell = new Cell(this.scene, 800, 600, cells.length, this.x, this.y, this.cellType, [this.colorR, this.colorG, this.colorB], serializeNeuralNetwork(this.neuronNetwork));
+                        let cell = new Cell(this.scene, 800, 600, cells.length, this.x, this.y, this.cellType, serializeNeuralNetwork(this.neuronNetwork));
                         cells.push(cell);
                         this.radius = this.radius / 2;
                         this.successPoints += 1;
@@ -187,14 +224,14 @@ export class Cell extends GameObjects.Graphics {
             console.log(e);
         }
     }
-    public handleDeath(): void {
+    handleDeath(): void {
         if(this.radius <= 2) {
             this.isAlive = false;
             this.destroy();
         }
     }
     
-    public handleEating(sensory: CellSensory, neiborCells: Cell[] = []): void {
+    handleEating(sensory: CellSensory, neiborCells: Cell[] = []): void {
         if(
             (sensory.isSensing)
             &&
@@ -224,14 +261,14 @@ export class Cell extends GameObjects.Graphics {
             }
         }
     }
-    public handleMutation(rate: number) {
+    handleMutation(rate: number) {
         if(this.clock.ageInSec - this.lastTimeMutated > this.mutationIntervalInSec) {
             this.neuronNetwork.mutate(rate);
             this.lastTimeMutated = this.clock.ageInSec;
             this.markFor(1);
         }
     }
-    public markFor(sec: number) {
+    markFor(sec: number) {
         this.isMarked = true;
         this.markedOnAge = this.clock.ageInSec + 0;
         this.markForInSec = sec;
@@ -240,15 +277,15 @@ export class Cell extends GameObjects.Graphics {
         let cellColors = [
             {
                 c: 1,
-                v: this.colorR
+                v: this.neuronNetwork.colorR
             },
             {
                 c: 2,
-                v: this.colorG
+                v: this.neuronNetwork.colorG
             },
             {
                 c: 3,
-                v: this.colorB
+                v: this.neuronNetwork.colorB
             },
         ]
 
@@ -282,15 +319,15 @@ export class Cell extends GameObjects.Graphics {
 }
 
 class CellSensory{
-    public relativeAngle: number = 0;
-    public distance: number = 0;
-    public colorR: number = 0;
-    public colorG: number = 0;
-    public colorB: number = 0;
-    public radius: number = 0;
-    public isAlive: boolean = false;
-    public speed: number = 0;
-    public cellId: number = 0;
-    public cellType: CellTypeEnum = CellTypeEnum.omnivore;
-    public isSensing: boolean = false;
+    relativeAngle: number = 0;
+    distance: number = 0;
+    colorR: number = 0;
+    colorG: number = 0;
+    colorB: number = 0;
+    radius: number = 0;
+    isAlive: boolean = false;
+    speed: number = 0;
+    cellId: number = 0;
+    cellType: CellTypeEnum = CellTypeEnum.omnivore;
+    isSensing: boolean = false;
 }

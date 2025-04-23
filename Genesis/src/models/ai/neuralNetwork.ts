@@ -3,6 +3,9 @@ import { Neuron } from "./neuron";
 
 export class NeuralNetwork {
     public layers: Layer[];
+    public colorR: number = 0;
+    public colorG: number = 0;
+    public colorB: number = 0;
   
     constructor(layerSizes: number[]) {
       this.layers = [];

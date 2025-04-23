@@ -31,6 +31,7 @@ import { InternalClock } from "@/models/internalClock";
 import { NeuralNetwork, serializeNeuralNetwork } from "@/models/ai/neuralNetwork";
 import NeuralNetworkComponent from "@/components/NeuralNetworkComponent.vue";
 import { useRouter } from "vue-router";
+import { Photon } from "@/models/photon";
 
 const router = useRouter();
 const cellCount = ref(0);
@@ -61,14 +62,18 @@ onMounted(() => {
   const viewHeight = view.clientHeight;
   
   let cells: Cell[] = [];
+  let photons: Photon[] = [];
   let createdCellCount = 0;
   let gameClock: InternalClock = new InternalClock();
 
   let lastPlantSpawn: number = 0;
-  let plantSpawnIntervult: number = 1;
+  let plantSpawnIntervult: number = 5;
 
   let lastBestCellCheck: number = 0;
   let bestCellCheckInterval: number = 5;
+
+  let lastPhotonSpawn: number = 0;
+  let photonSpawnInterval: number = 0.3;
 
   const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -122,7 +127,7 @@ onMounted(() => {
   function createCells(scene: Phaser.Scene) {
     for(var i=0;i<100;i++) {
       createdCellCount++;
-      cells.push(new Cell(scene, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.omnivore, [], initNeuralNetworkInJsonString.value));
+      cells.push(new Cell(scene, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.omnivore, initNeuralNetworkInJsonString.value));
     }
   }
 
@@ -146,32 +151,59 @@ onMounted(() => {
   function update(this: Phaser.Scene) {
     gameClock.aging();
     clearDeadCells();
-    for (const cell of cells) {
-      cell.update([cells]);
-      this.physics.world.wrap(cell);
-    }
+    updateAllCells();
+    updateAllPhotons();
+    checkIfToSpawnPlant(this);
+    checkIfToDeletePhoton();
+    checkIfToSpawnPhoton(this);
+    updateDisplayDate();
+  }
 
+  function checkIfToSpawnPlant(scene: Phaser.Scene) {
     if(
-        cells.filter(cell => cell.cellType === CellTypeEnum.plant).length < 300 
+        cells.filter(cell => cell.cellType === CellTypeEnum.plant).length < 200 
         && gameClock.ageInSec - lastPlantSpawn > plantSpawnIntervult
         && Phaser.Math.Between(0, 1) < 1
       ) {
       createdCellCount++;
-      cells.push(new Cell(this, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.plant));
+      cells.push(new Cell(scene, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.plant));
       lastPlantSpawn = gameClock.ageInSec;
     }
+  }
 
-    updateDisplayDate();
+  function checkIfToSpawnPhoton(scene: Phaser.Scene) {
+    if(photons.length < 100 && isTimeToSpawnPhoton()) {
+      photons.push(new Photon(scene, viewWidth /2 , viewHeight / 2));
+    }
   }
 
   function clearDeadCells() {
     cells = cells.filter(cell => cell.isAlive);
   }
-
   
+  function updateAllCells() {
+    for (const cell of cells) {
+      cell.update(photons, [cells]);
+    }
+  }
+  
+  function isTimeToSpawnPhoton(): boolean {
+    if (gameClock.ageInSec - lastPhotonSpawn > photonSpawnInterval) {
+      lastPhotonSpawn = gameClock.ageInSec;
+      return true;
+    }
+    return false;
+  }
+
+  function updateAllPhotons() {
+    photons.forEach(photon => {
+      photon.update([]);
+    })
+  }
+  function checkIfToDeletePhoton() {
+    photons = photons.filter(photon => photon.radius > 0);
+  }
 });
-
-
 </script>
 
 <style scoped>
@@ -188,3 +220,5 @@ onMounted(() => {
   padding: 5px 10px;
 }
 </style>
+
+
