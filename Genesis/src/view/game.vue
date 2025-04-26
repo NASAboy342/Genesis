@@ -148,6 +148,7 @@ onMounted(() => {
         let newCell = new Cell(scene, viewWidth, viewHeight, createdCellCount, 0, 0, CellTypeEnum.omnivore, highestScoreCellNeuralNetworkAsJson.value);
         newCell.successPoints = highestScore.value;
         cells.push(newCell);
+        resetCellsSuccessPoints();
       }
     }
   }
@@ -238,7 +239,11 @@ onMounted(() => {
       createCells(scene, false)
     }
   }
+  function resetCellsSuccessPoints() {
+    cells.filter(cell => cell.cellType === CellTypeEnum.omnivore).forEach(cell => cell.successPoints = 0);
+  }
 });
+
 
 
 </script>
