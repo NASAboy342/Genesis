@@ -111,7 +111,7 @@ onMounted(() => {
 
     if(gameClock.ageInSec - lastBestCellCheck > bestCellCheckInterval) {
       lastBestCellCheck = gameClock.ageInSec;
-      bestCellId.value = cells.sort((a, b) => b.successPoints - a.successPoints)[0].id;
+      bestCellId.value = cells.filter(cell => cell.cellType === CellTypeEnum.omnivore).sort((a, b) => b.successPoints - a.successPoints)[0].id;
     }
     let bestCell = cells.find(cell => cell.id === bestCellId.value);
     if(bestCell) {
