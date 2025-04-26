@@ -38,19 +38,21 @@ onMounted(() => {
 
   function create(this: Phaser.Scene) {
     props.neuralNetwork.layers.forEach((layer, index) => {
+      index = index + 1;
       let marginLeft = 30;
       let marginTop = 20;
       let layerGap = 260;
       let layerW = 30;
       let layerH = layer.neurons.length * 65;
       let layerY = 0 + marginTop;
-      let layerX = marginLeft + index * (layerW + layerGap);
+      let layerX = marginLeft + (index)  * (layerW + layerGap);
 
       this.add.graphics()
         .fillStyle(ColorUtils.rgbToHex(255,255,255), 0)
         .fillRect(layerX, layerY, layerW, layerH);
 
       layer.neurons.forEach((neuron, neuronIndex) => {
+        
         let neuralR = 8;
         let neuralGap = 50;
         let neuralY = marginTop + 2 + (neuronIndex * (neuralR * 2 + neuralGap));
@@ -61,8 +63,8 @@ onMounted(() => {
           .fillStyle(ColorUtils.rgbToHex(0, 200, 150), 1)
           .fillCircle(neuralCenteredX, neuralCenteredY, neuralR);
 
-        if(index !== 0){
           neuron.weights.forEach((weight, weightIndex) => {
+            weightIndex
             let lineW = MathUtils.Mapto0and8(weight);
             let lineColor = ColorUtils.rgbToHex(0, 100, 100);
             let lineAlp = 1;
@@ -78,7 +80,6 @@ onMounted(() => {
             .lineTo(lineX2, lineY2)
             .strokePath()
           });
-        }
       });
     });
   }
@@ -94,8 +95,8 @@ onMounted(() => {
 <style scoped>
 .game-view {
   position: relative;
-  width: 1000px;
-  height: 1000px;
+  width: 1500px;
+  height: 1500px;
   background-color: blueviolet;
 }
 </style>

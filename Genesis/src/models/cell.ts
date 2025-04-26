@@ -63,8 +63,10 @@ export class Cell extends GameObjects.Graphics {
         
         this.fillStyle(this.color)
         this.fillCircle(0, 0, this.radius);
-        this.fillStyle(ColorUtils.rgbToHex(this.sendingMessage, 0, 9));
-        this.fillCircle(this.radius-2, 0, this.radius * 0.2);
+        if(this.cellType !== CellTypeEnum.plant){
+            this.fillStyle( ColorUtils.rgbToHex(this.sendingMessage, 0, 255));
+            this.fillCircle(0 ,0 , this.radius * 0.3);
+        }
 
     }
     getColor(): void {
@@ -133,7 +135,7 @@ export class Cell extends GameObjects.Graphics {
         }
     }
     handleRigidBodyV2(cells: Cell[]) {
-        let touchingDistance = 0;
+        let touchingDistance = -1;
         let touchingCells = cells.find(cell => cell.id !== this.id && Phaser.Math.Distance.Between(this.x, this.y, cell.x, cell.y) - this.radius - cell.radius <= touchingDistance);
         if(touchingCells) {
             let angle = Phaser.Math.Angle.Between(this.x, this.y, touchingCells.x, touchingCells.y);
@@ -184,7 +186,7 @@ export class Cell extends GameObjects.Graphics {
                     this.messageMemmorySlots[3],
                     this.messageMemmorySlots[4],
                     this.messageMemmorySlots[5],
-                    this.messageMemmorySlots[8],
+                    this.messageMemmorySlots[6],
                 ]);
                 let dEngle =  MathUtils.SigmoidToMinMax(neuronOutPut[0], -5, 5);
                 let speedToMove = MathUtils.SigmoidToMinMax(neuronOutPut[1], 0, 2);
