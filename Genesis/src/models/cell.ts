@@ -25,6 +25,9 @@ export class Cell extends GameObjects.Graphics {
     mutationIntervalInSec: number = 5;
     successPoints: number = 0;
     maxPlantRadius: number = 7;
+    messageMemmorySlots: number[] = [0, 0, 0, 0, 0, 0, 0]; // 7 slots of messages
+    sendingMessage: number = 0;
+
 
     constructor(
         scene: Phaser.Scene, 
@@ -39,7 +42,7 @@ export class Cell extends GameObjects.Graphics {
         super(scene);
         this.cellType = cellType;
         this.angle = Phaser.Math.DegToRad(0);
-        this.neuronNetwork = neuronNetworkInJson === "" ? new NeuralNetwork([11, 15, 10, 4, 2]) : deserializeNeuralNetwork(neuronNetworkInJson);
+        this.neuronNetwork = neuronNetworkInJson === "" ? new NeuralNetwork([18, 20, 10, 5, 3]) : deserializeNeuralNetwork(neuronNetworkInJson);
         this.getColor();
         this.draw();
         this.addToDisplayList();
@@ -60,6 +63,8 @@ export class Cell extends GameObjects.Graphics {
         
         this.fillStyle(this.color)
         this.fillCircle(0, 0, this.radius);
+        this.fillStyle(ColorUtils.rgbToHex(this.sendingMessage, 0, 9));
+        this.fillCircle(this.radius-2, 0, this.radius * 0.2);
 
     }
     getColor(): void {
@@ -105,6 +110,7 @@ export class Cell extends GameObjects.Graphics {
             sensory.speed = closestCell.speed;
             sensory.cellId = closestCell.id;
             sensory.cellType = closestCell.cellType;
+            sensory.inCommingMessage = closestCell.sendingMessage;
             sensory.isSensing = true;
             this.successPoints += 0.00001;
         }
@@ -158,6 +164,7 @@ export class Cell extends GameObjects.Graphics {
     doIfNotPlant(...args: any[]) {
         if(this.cellType !== CellTypeEnum.plant) {
             let sensory = this.Senc(...args[0]);
+            this.saveInCommingMessage(sensory);
             let neuronOutPut = this.neuronNetwork.feedForward(
                 [
                     sensory.relativeAngle, 
@@ -170,16 +177,39 @@ export class Cell extends GameObjects.Graphics {
                     sensory.speed,
                     this.radius,
                     this.angle,
-                    this.speed
+                    this.speed,
+                    this.messageMemmorySlots[0],
+                    this.messageMemmorySlots[1],
+                    this.messageMemmorySlots[2],
+                    this.messageMemmorySlots[3],
+                    this.messageMemmorySlots[4],
+                    this.messageMemmorySlots[5],
+                    this.messageMemmorySlots[8],
                 ]);
                 let dEngle =  MathUtils.SigmoidToMinMax(neuronOutPut[0], -5, 5);
                 let speedToMove = MathUtils.SigmoidToMinMax(neuronOutPut[1], 0, 2);
+                this.sendingMessage = MathUtils.SigmoidToMinMax(neuronOutPut[2], 0, 255);
                 this.handleEating(sensory,...args[0]);
                 this.handleReproduction(...args[0]);
                 this.move(dEngle, speedToMove);
                 this.handleRigidBody(sensory, ...args[0]);
                 this.clock.aging();
                 this.handleToUnMark();
+        }
+    }
+    saveInCommingMessage(sensory: CellSensory) {
+        if(sensory.isSensing && sensory.cellType === CellTypeEnum.omnivore){
+            this.pushOldMessageAlongTheSlotsToMakeRoomForNew()
+            this.messageMemmorySlots[0] = sensory.inCommingMessage;
+        }
+    }
+    pushOldMessageAlongTheSlotsToMakeRoomForNew() {
+        for(
+            let index = this.messageMemmorySlots.length - 1;
+            index > 0;
+            index--
+        ){
+            this.messageMemmorySlots[index] = this.messageMemmorySlots[index-1];
         }
     }
     handleRigidBody(sensory: CellSensory, neiborCells: Cell[] = []) {
@@ -330,5 +360,7 @@ class CellSensory{
     speed: number = 0;
     cellId: number = 0;
     cellType: CellTypeEnum = CellTypeEnum.omnivore;
+    inCommingMessage: number = 0;
     isSensing: boolean = false;
+
 }
