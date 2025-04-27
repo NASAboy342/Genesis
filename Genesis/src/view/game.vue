@@ -201,6 +201,7 @@ onMounted(() => {
   }
 
   function clearDeadCells() {
+    cells.filter(cell => !cell.isAlive).forEach(cell => cell.removeFromDisplayList());
     cells = cells.filter(cell => cell.isAlive);
   }
   
@@ -224,6 +225,7 @@ onMounted(() => {
     })
   }
   function checkIfToDeletePhoton() {
+    photons.filter(photon => photon.radius <= 0).forEach(photon => photon.removeFromDisplayList());
     photons = photons.filter(photon => photon.radius > 0);
   }
   function doIfTimeToCheckPopulation(scene: Phaser.Scene) {

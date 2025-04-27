@@ -260,7 +260,6 @@ export class Cell extends GameObjects.Graphics {
     handleDeath(): void {
         if(this.radius <= 2) {
             this.isAlive = false;
-            this.destroy();
         }
     }
     

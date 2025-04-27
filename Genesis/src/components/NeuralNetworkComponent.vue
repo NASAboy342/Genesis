@@ -6,13 +6,15 @@
 
 <script setup lang="ts">
 import { NeuralNetwork } from "@/models/ai/neuralNetwork";
-import { ref, watch } from "vue";
+import { onUnmounted, ref, watch } from "vue";
 import { onMounted } from "vue";
 import Phaser from "phaser";
 import { ColorUtils } from "@/utils/colorUtils";
 import { MathUtils } from "@/utils/mathUtils";
 
 const props = defineProps<{ neuralNetwork: NeuralNetwork}>();
+
+let game: Phaser.Game | null = null;
 
 onMounted(() => {
   const view = document.querySelector("#game-container");
@@ -31,7 +33,7 @@ onMounted(() => {
     },
   };
 
-  const game = new Phaser.Game(config);
+  game = new Phaser.Game(config);
 
   function preload() {
   }
@@ -86,6 +88,12 @@ onMounted(() => {
 
   function update(this: Phaser.Scene, time: number, delta: number) {
     // Game update logic here
+  }
+});
+onUnmounted(() => {
+  if (game) {
+    game.destroy(true); // Destroy the Phaser game instance
+    game = null;
   }
 });
 
