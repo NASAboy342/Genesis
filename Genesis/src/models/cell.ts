@@ -288,7 +288,7 @@ export class Cell extends GameObjects.Graphics {
             }
         }
         else{
-            if(this.clock.ageInSec - this.lastTimeEaten > 10) {
+            if(this.clock.ageInSec - this.lastTimeEaten > 120) {
                 this.handleMutation(0.5);
             }
         }

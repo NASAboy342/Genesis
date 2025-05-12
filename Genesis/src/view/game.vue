@@ -19,6 +19,7 @@
 
   <CustomDialog dialog-title="Cell Info" v-model="isCellInfoDialogVisible">
   </CustomDialog>
+  <div class="frame-counter">{{ framePerSecond }} FPS</div>
   <div class="game-view" id="game-container"></div>
 </template>
 
@@ -49,6 +50,7 @@ const bestCellNeurone = ref<NeuralNetwork>(null);
 const bestCellNeuroneAsJson = ref<string>('');
 const highestScore = ref(0);
 const highestScoreCellNeuralNetworkAsJson = ref<string>('');
+const framePerSecond = ref(0);
 
 const isDataDialogVisible = ref(false);
 const isCellInfoDialogVisible = ref(false);
@@ -80,6 +82,10 @@ onMounted(() => {
 
   let lastPopulationCheck: number = 0;
   let populationCheckInterval: number = 5.1;
+
+  let frameCount: number = 0;
+  let frameCountInterval: number = 1;
+  let frameCountLastCheck: number = 0;
 
   const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -125,6 +131,17 @@ onMounted(() => {
         highestScore.value = bestCell.successPoints;
         highestScoreCellNeuralNetworkAsJson.value = serializeNeuralNetwork(bestCell.neuronNetwork);
       }
+    }
+
+    countFrame();
+  }
+
+  function countFrame() {
+    frameCount++;
+    if(gameClock.ageInSec - frameCountLastCheck >= frameCountInterval){
+      frameCountLastCheck = gameClock.ageInSec;
+      framePerSecond.value = frameCount;
+      frameCount = 0;
     }
   }
 
@@ -262,6 +279,13 @@ onMounted(() => {
   top: 50px;
   left: 10px;
   padding: 5px 10px;
+}
+.frame-counter{
+  position: absolute;
+  z-index: 1;
+  top: 100px;
+  left: 10px;
+  font-size: 20px;
 }
 </style>
 
