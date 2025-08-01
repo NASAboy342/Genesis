@@ -22,7 +22,7 @@ export class Cell extends GameObjects.Graphics {
     markedOnAge: number = 0;
     markForInSec: number = 0;
     lastTimeMutated: number = 0;
-    mutationIntervalInSec: number = 5;
+    mutationIntervalInSec: number = 50;
     successPoints: number = 0;
     maxPlantRadius: number = 7;
     messageMemmorySlots: number[] = [0, 0, 0, 0, 0, 0, 0]; // 7 slots of messages
