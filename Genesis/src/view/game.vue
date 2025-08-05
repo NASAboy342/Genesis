@@ -213,7 +213,7 @@ onMounted(() => {
 
   function checkIfToSpawnPhoton(scene: Phaser.Scene) {
     if(photons.length < 100 && isTimeToSpawnPhoton()) {
-      photons.push(new Photon(scene, viewWidth /2 , viewHeight / 2));
+      photons.push(new Photon(scene, Phaser.Math.Between(0,viewWidth), Phaser.Math.Between(0,viewHeight)));
     }
   }
 
