@@ -64,7 +64,7 @@ export class Cell extends GameObjects.Graphics {
         this.fillStyle(this.color)
         this.fillCircle(0, 0, this.radius);
         if(this.cellType !== CellTypeEnum.plant){
-            this.fillStyle( ColorUtils.rgbToHex(this.sendingMessage, 0, 255));
+            this.fillStyle( ColorUtils.rgbToHex(this.sendingMessage, this.sendingMessage, this.sendingMessage));
             this.fillCircle(0 ,0 , this.radius * 0.3);
         }
 
@@ -75,9 +75,9 @@ export class Cell extends GameObjects.Graphics {
             this.neuronNetwork.colorG = 255;
             this.neuronNetwork.colorB = 0;
         } else {
-            this.neuronNetwork.colorR = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
-            this.neuronNetwork.colorG = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
-            this.neuronNetwork.colorB = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorR = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorG = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorB = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
         }
         this.color = ColorUtils.rgbToHex(this.neuronNetwork.colorR, this.neuronNetwork.colorG, this.neuronNetwork.colorB);
     }
