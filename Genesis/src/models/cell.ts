@@ -125,7 +125,14 @@ export class Cell extends GameObjects.Graphics {
         this.doIfNotPlant(...args);
         this.doIfPlant(photons, ...args[0]);
         this.draw();
+        
         //super.update(...args);
+    }
+    mutateColor() {
+        this.neuronNetwork.colorR = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
+        this.neuronNetwork.colorG = this.neuronNetwork.colorG > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorG, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
+        this.neuronNetwork.colorB = this.neuronNetwork.colorB > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorB, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
+        this.color = ColorUtils.rgbToHex(this.neuronNetwork.colorR, this.neuronNetwork.colorG, this.neuronNetwork.colorB);
     }
     doIfPlant(photons: Photon[] = [], cells: Cell[] = []) {
         if(this.cellType === CellTypeEnum.plant) {
@@ -197,6 +204,7 @@ export class Cell extends GameObjects.Graphics {
                 this.handleRigidBody(sensory, ...args[0]);
                 this.clock.aging();
                 this.handleToUnMark();
+                this.mutateColor();
         }
     }
     saveInCommingMessage(sensory: CellSensory) {
