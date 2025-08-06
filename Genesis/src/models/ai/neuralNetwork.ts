@@ -71,6 +71,9 @@ export function deserializeNeuralNetwork(json: string): NeuralNetwork {
 
     const network = new NeuralNetwork([]);
     network.layers = obj.layers;
+    network.colorR = obj.colorR || 0;
+    network.colorG = obj.colorG || 0;
+    network.colorB = obj.colorB || 0;
     return network;
 }
 

@@ -76,8 +76,8 @@ export class Cell extends GameObjects.Graphics {
             this.neuronNetwork.colorB = 0;
         } else {
             this.neuronNetwork.colorR = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
-            this.neuronNetwork.colorG = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
-            this.neuronNetwork.colorB = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorG = this.neuronNetwork.colorG > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorG, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorB = this.neuronNetwork.colorB > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorB, Phaser.Math.Between(-1, 1)) : Phaser.Math.Between(50, 255);
         }
         this.color = ColorUtils.rgbToHex(this.neuronNetwork.colorR, this.neuronNetwork.colorG, this.neuronNetwork.colorB);
     }
@@ -146,7 +146,7 @@ export class Cell extends GameObjects.Graphics {
     }
     handlePlantReproduction(cells: Cell[] = []) {
         if(this.radius > this.maxPlantRadius && this.isPlantCellsNotOverPopulated(cells)){
-            let newPlant = new Cell(this.scene, 0, 0 , cells.length, this.x + Phaser.Math.Between(2,5), this.y + Phaser.Math.Between(2,5), CellTypeEnum.plant, '' );
+            let newPlant = new Cell(this.scene, 0, 0 , cells.length, this.x + Phaser.Math.Between(-5,5), this.y + Phaser.Math.Between(-5,5), CellTypeEnum.plant, '' );
             cells.push(newPlant);
             this.radius = 5;
         }

@@ -106,6 +106,10 @@ onMounted(() => {
       create,
       update,
     },
+    fps: {
+        target: 60,             // Cap to 60 FPS
+        forceSetTimeOut: true   // Enforce it even if monitor supports more
+    }
   };
 
   const game = new Phaser.Game(config);
