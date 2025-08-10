@@ -75,9 +75,9 @@ export class Cell extends GameObjects.Graphics {
             this.neuronNetwork.colorG = 255;
             this.neuronNetwork.colorB = 0;
         } else {
-            this.neuronNetwork.colorR = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-5, 5)) : Phaser.Math.Between(50, 255);
-            this.neuronNetwork.colorG = this.neuronNetwork.colorG > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorG, Phaser.Math.Between(-5, 5)) : Phaser.Math.Between(50, 255);
-            this.neuronNetwork.colorB = this.neuronNetwork.colorB > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorB, Phaser.Math.Between(-5, 5)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorR = this.neuronNetwork.colorR > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorR, Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorG = this.neuronNetwork.colorG > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorG, Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
+            this.neuronNetwork.colorB = this.neuronNetwork.colorB > 0 ? ColorUtils.addColorValue(this.neuronNetwork.colorB, Phaser.Math.Between(-20, 20)) : Phaser.Math.Between(50, 255);
         }
         this.color = ColorUtils.rgbToHex(this.neuronNetwork.colorR, this.neuronNetwork.colorG, this.neuronNetwork.colorB);
     }
