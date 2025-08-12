@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import Phaser from "phaser";
 import { GameObjectBase } from "@/models/gameObjects/gameObjectBase";
 import { Color } from "@/models/color";
@@ -7,8 +7,10 @@ import { GridBackground } from "@/models/gameObjects/gridBackground";
 import { Ground } from "@/models/gameObjects/ground";
 import { Rocket } from "@/models/gameObjects/Rocket";
 
-  let mapWidth: number = 1000;
-  let mapHeight: number = 1000;
+const frameRate = ref(0);
+
+let mapWidth: number = 1000;
+let mapHeight: number = 1000;
 
 class GameScene extends Phaser.Scene {
   backgroundGrid: GridBackground;
@@ -36,7 +38,7 @@ class GameScene extends Phaser.Scene {
   }
 
   update() {
-    
+    frameRate.value = this.game.loop.actualFps;
   }
 }
 
@@ -51,11 +53,15 @@ onMounted(() => {
     width: windowWidth,
     height: windowHeight,
     parent: "game-container",
+    fps: {
+      target: 60,
+      forceSetTimeOut: true, // Use setTimeout for frame rate control
+    },
     physics: {
           default: "matter", // ✅ use Matter.js
           matter: {
             gravity: { x: 0, y: 1}, // normal downward gravity
-            debug: true,
+            debug: false,
             setBounds: {
               x: 0,
               y: 0,
@@ -76,12 +82,23 @@ onUnmounted(() => {
 
 <template>
   <div id="game-container"></div>
+  <div class="fps-display">
+    FPS: {{ frameRate }}
+  </div>
 </template>
 
 <style scoped>
 #game-container {
+  position: absolute;
   width: 100%;
   height: 100%;
   margin: auto;
+}
+.fps-display {
+  position: relative;
+  top: 50px;
+  left: 10px;
+  background-color: transparent;;
+  color: white;
 }
 </style>
