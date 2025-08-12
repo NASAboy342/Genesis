@@ -15,9 +15,11 @@ let mapHeight: number = 1000;
 class GameScene extends Phaser.Scene {
   backgroundGrid: GridBackground;
   ground: Ground;
-  rocket: Rocket[] = [];
-  
+  rockets: Rocket[] = [];  
   gridSize: number = 50;
+  
+  cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
+
   constructor() {
     super({ key: "GameScene" });
   }
@@ -32,12 +34,33 @@ class GameScene extends Phaser.Scene {
       this.gridSize
     );
     this.ground = new Ground(this, mapWidth / 2, mapHeight, mapWidth);
-    for (let i = 0; i < 200; i++) {
-      this.rocket.push(new Rocket(this, Phaser.Math.Between(0, mapWidth), Phaser.Math.Between(0, mapHeight)));
+    for(let i = 0; i < 100; i++) {
+      this.rockets.push(new Rocket(this, Phaser.Math.Between(0, mapWidth), Phaser.Math.Between(0, mapHeight)));
     }
+
+    this.cursorKeys = this.input.keyboard.createCursorKeys();
+
   }
 
   update() {
+    if(this.cursorKeys.up.isDown){
+      this.rockets.forEach(rocket => {
+        rocket.handleThrust();
+      });
+    }
+    if(this.cursorKeys.left.isDown){
+      this.rockets.forEach(rocket => {
+        rocket.stearLeft();
+      });
+    }
+    if(this.cursorKeys.right.isDown){
+      this.rockets.forEach(rocket => {
+        rocket.stearRight();
+      });
+    }
+    this.rockets.forEach(rocket => {
+      rocket.update();
+    });
     frameRate.value = this.game.loop.actualFps;
   }
 }
@@ -61,7 +84,7 @@ onMounted(() => {
           default: "matter", // ✅ use Matter.js
           matter: {
             gravity: { x: 0, y: 1}, // normal downward gravity
-            debug: false,
+            debug: true,
             setBounds: {
               x: 0,
               y: 0,

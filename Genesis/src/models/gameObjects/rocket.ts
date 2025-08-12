@@ -1,15 +1,25 @@
 import { GameObjectBase } from "./gameObjectBase";
 
 export class Rocket extends GameObjectBase {
+    
     width: number = 20;
     height: number = 50;
+    physicBody: Phaser.Physics.Matter.Sprite;
+    thrustForce: number = 0.003;
+
     constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, x, y);
+        this.generateTexture('rocket');
         this.drawRocket();
-        scene.matter.add.gameObject(this, {
-            shape: 'rectangle',
+
+        this.physicBody = scene.matter.add.sprite(x, y, 'rocket', '', {
+            shape: {
+                type: 'rectangle',
+                width: this.width,
+                height: this.height,
+            },
             restitution: 0.5,
-        }, true);
+        });
     }
 
     public drawRocket(): void {
@@ -25,7 +35,19 @@ export class Rocket extends GameObjectBase {
     }
 
     override update(...args: any[]): void {
+        this.x = this.physicBody.x;
+        this.y = this.physicBody.y;
+        this.rotation = this.physicBody.rotation;
         super.update(...args);
-        this.drawRocket();
+        //this.drawRocket();
+    }
+    handleThrust() {
+        this.physicBody.thrustLeft(this.thrustForce);;
+    }
+    stearRight() {
+        this.physicBody.setAngularVelocity(this.physicBody.getAngularVelocity()+this.thrustForce); // Adjust the angular velocity for right steering
+    }
+    stearLeft() {
+        this.physicBody.setAngularVelocity(this.physicBody.getAngularVelocity()-this.thrustForce); // Adjust the angular velocity for left steering
     }
 }

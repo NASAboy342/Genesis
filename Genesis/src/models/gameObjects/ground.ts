@@ -6,12 +6,11 @@ export class Ground extends GameObjectBase{
     constructor(scene: Phaser.Scene, x: number, y: number, width: number) {
         super(scene, x, y);
         this.width = width;
-        this.drawGround()
+        this.drawGround();
         scene.matter.add.gameObject(this, {
-            shape: 'rectangle',
             restitution: 0.5,
-            isStatic: true, // Make the ground static
-        }, true);
+            isStatic: true,
+        },true);
     }
 
     public drawGround(): void {
@@ -20,6 +19,5 @@ export class Ground extends GameObjectBase{
 
     override update(...args: any[]): void {
         super.update(...args);
-        this.drawGround();
     }
 }
