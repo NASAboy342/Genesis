@@ -1,7 +1,7 @@
 export class GameObjectBase extends Phaser.GameObjects.Graphics {
+
     constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, { x, y });
-        this.setPosition(x, y);
         scene.add.existing(this);
     }
 
@@ -19,6 +19,9 @@ export class GameObjectBase extends Phaser.GameObjects.Graphics {
         this.clear();
     }
 
+    override update(...args: any[]): void {
+        super.update(...args);
+    }
     override destroy(fromScene?: boolean): void {
         this.clearGraphics();
         super.destroy(fromScene);

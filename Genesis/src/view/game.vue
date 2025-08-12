@@ -7,12 +7,14 @@ import { GridBackground } from "@/models/gameObjects/gridBackground";
 import { Ground } from "@/models/gameObjects/ground";
 import { Rocket } from "@/models/gameObjects/Rocket";
 
+  let mapWidth: number = 1000;
+  let mapHeight: number = 1000;
+
 class GameScene extends Phaser.Scene {
   backgroundGrid: GridBackground;
   ground: Ground;
-  rocket: Rocket;
-  mapWidth: number = 1000;
-  mapHeight: number = 1000;
+  rocket: Rocket[] = [];
+  
   gridSize: number = 50;
   constructor() {
     super({ key: "GameScene" });
@@ -23,16 +25,18 @@ class GameScene extends Phaser.Scene {
   create() {
     this.backgroundGrid = new GridBackground(
       this,
-      this.mapWidth,
-      this.mapHeight,
+      mapWidth,
+      mapHeight,
       this.gridSize
     );
-    this.ground = new Ground(this, 0, this.mapHeight, this.mapWidth);
-    this.rocket = new Rocket(this, this.mapWidth / 2, this.mapHeight / 2);
+    this.ground = new Ground(this, mapWidth / 2, mapHeight, mapWidth);
+    for (let i = 0; i < 200; i++) {
+      this.rocket.push(new Rocket(this, Phaser.Math.Between(0, mapWidth), Phaser.Math.Between(0, mapHeight)));
+    }
   }
 
   update() {
-    this.rocket.update();
+    
   }
 }
 
@@ -50,8 +54,15 @@ onMounted(() => {
     physics: {
           default: "matter", // ✅ use Matter.js
           matter: {
-            gravity: { x: 0, y: 0.1}, // normal downward gravity
-            debug: true
+            gravity: { x: 0, y: 1}, // normal downward gravity
+            debug: true,
+            setBounds: {
+              x: 0,
+              y: 0,
+              width: mapWidth,
+              height: mapHeight,
+            }
+            
           }
         },
     scene: GameScene,
