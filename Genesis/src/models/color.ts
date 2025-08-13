@@ -9,7 +9,7 @@ export class Color{
     public GetHex(): number {
         return ColorUtils.rgbToHex(this.r, this.g, this.b);
     }
-    public GetHexFromRGB(r: number, g: number, b: number): number {
+    public static GetHexFromRGB(r: number, g: number, b: number): number {
       return ColorUtils.rgbToHex(r, g, b);
     }
 }

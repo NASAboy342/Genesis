@@ -31,30 +31,48 @@ export class Rocket extends GameObjectBase {
         const color = 0xff0000;
         const alpha = 1;
 
-        this.drawRectangle(-this.width / 2, -this.height / 2, this.width, this.height, color, alpha);
+        const rocketx = -this.width / 2;
+        const rockety = -this.height / 2;
+
+        this.drawRectangle(rocketx, rockety, this.width, this.height, color, alpha);
 
         this.fillStyle(0x000000, alpha);
-        this.fillTriangle(0, -this.height / 2, -this.width / 2, -this.height / 2 + this.height / 4, this.width / 2, -this.height / 2 + this.height / 4);
+        this.fillTriangle(0, rockety, rocketx, rockety + this.height / 4, this.width / 2, rockety + this.height / 4);
 
         if(this.isThrusting){
-            this.drawThrust();
+            this.drawThrust(rocketx,rockety);
         }
         if(this.isThrustingLeft){
-            this.drawThrustRight();
+            this.drawThrustRight(rocketx,rockety);
         }
         if(this.isThrustingRight){
-            this.drawThrustLeft();
+            this.drawThrustLeft(rocketx,rockety);
         }
     }
-    public drawThrust(): void {
-        this.fillStyle(0xffa500, 1); // Orange color for the thrust
-        this.fillTriangle(0, this.height / 2, -this.width / 4, this.height / 2 + this.height / 4, this.width / 4, this.height / 2 + this.height / 4);
+    public drawThrust(rocketx: number,rockety: number): void {
+        this.fillStyle(0xffa500, 1);
+        const thrustLength = this.width;
+        const rocketMidX = rocketx + (this.width/2);
+        const rocketBottum = rockety + this.height;
+        const rocketLeftEch = rocketx;
+        const rocketRightEch = rocketx + this.width;
+        this.fillTriangle(rocketMidX, rocketBottum, rocketLeftEch, rocketBottum+thrustLength, rocketRightEch, rocketBottum+thrustLength);
     }
-    public drawThrustLeft(): void{
-        
+    public drawThrustLeft(rocketx: number,rockety: number): void{
+        this.fillStyle(Color.GetHexFromRGB(255,255,255), 1);
+        const rocketLeftEch = rocketx;
+        const rocketUpHalf = rockety + (this.height/4);
+        const thrustLength = this.width/2;
+        const thrustRedius = (this.width/4);
+        this.fillTriangle(rocketLeftEch, rocketUpHalf, rocketLeftEch-thrustLength, rocketUpHalf+thrustRedius, rocketLeftEch-thrustLength, rocketUpHalf-thrustRedius)
     }
-    public drawThrustRight(): void{
-
+    public drawThrustRight(rocketx: number,rockety: number): void{
+        this.fillStyle(Color.GetHexFromRGB(255,255,255), 1);
+        const rocketRightEch = rocketx + this.width;
+        const rocketUpHalf = rockety + (this.height/4);
+        const thrustLength = this.width/2;
+        const thrustRedius = (this.width/4);
+        this.fillTriangle(rocketRightEch, rocketUpHalf, rocketRightEch+thrustLength, rocketUpHalf+thrustRedius, rocketRightEch+thrustLength, rocketUpHalf-thrustRedius)
     }
 
     override update(...args: any[]): void {
