@@ -34,7 +34,7 @@ class GameScene extends Phaser.Scene {
       this.gridSize
     );
     this.ground = new Ground(this, mapWidth / 2, mapHeight, mapWidth);
-    for(let i = 0; i < 100; i++) {
+    for(let i = 0; i < 1; i++) {
       this.rockets.push(new Rocket(this, Phaser.Math.Between(0, mapWidth), Phaser.Math.Between(0, mapHeight)));
     }
 

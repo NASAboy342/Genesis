@@ -10,6 +10,7 @@ export class Rocket extends GameObjectBase {
     isThrusting: boolean = false;
     isThrustingRight: boolean = false;
     isThrustingLeft: boolean = false;
+    sensor: RocketSensor = new RocketSensor();
 
     constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, x, y);
@@ -104,4 +105,20 @@ export class Rocket extends GameObjectBase {
     //#region Rocket sensors
     
     //#endregion Rocket sensors
+}
+
+export class RocketSensor{
+    readonly defaultProximitySensorsValue: number = 100;
+
+    fronLeftProximitySensors: number = this.defaultProximitySensorsValue;
+    fronProximitySensors: number = this.defaultProximitySensorsValue;
+    fronRightProximitySensors: number = this.defaultProximitySensorsValue;
+
+    leftProximitySensors: number = this.defaultProximitySensorsValue;
+    rightProximitySensors: number = this.defaultProximitySensorsValue;
+
+    rearLeftProximitySensors: number = this.defaultProximitySensorsValue;
+    rearProximitySensors: number = this.defaultProximitySensorsValue;
+    rearRightProximitySensors: number = this.defaultProximitySensorsValue;
+
 }
