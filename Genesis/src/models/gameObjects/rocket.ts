@@ -80,22 +80,21 @@ export class Rocket extends GameObjectBase {
     }
     public drawThrust(): void {
         this.fillStyle(0xffa500, 1);
-        const thrustLength = this.width;
+        const thrustLength = this.height /2 + this.width;
         const rocketMidX = 0;
-        const rocketBottum = this.height/2;
-        this.fillTriangle(rocketMidX, rocketBottum, this.rocketLeftEdge, rocketBottum+thrustLength, this.rocketRightEdge, rocketBottum+thrustLength);
+        this.fillTriangle(rocketMidX, this.rocketBottom, this.rocketLeftEdge, this.rocketBottom+thrustLength, this.rocketRightEdge, this.rocketBottom+thrustLength);
     }
     public drawThrustLeft(): void{
         this.fillStyle(Color.GetHexFromRGB(255,255,255), 1);
         const thrustLength = this.width/2;
         const thrustRedius = (this.width/4);
-        this.fillTriangle(this.rocketLeftEdge, this.rocketUpHalf, this.rocketLeftEdge-thrustLength, this.rocketUpHalf+thrustRedius, this.rocketLeftEdge-thrustLength, this.rocketUpHalf-thrustRedius)
+        this.fillTriangle(this.rocketLeftEdge, this.rocketUpHalf, this.rocketLeftEdge-thrustLength, this.rocketUpHalf+thrustRedius, this.rocketLeftEdge-thrustLength, this.rocketUpHalf-thrustRedius);
     }
     public drawThrustRight(): void{
         this.fillStyle(Color.GetHexFromRGB(255,255,255), 1);
         const thrustLength = this.width/2;
         const thrustRedius = (this.width/4);
-        this.fillTriangle(this.rocketRightEdge, this.rocketUpHalf, this.rocketRightEdge+thrustLength, this.rocketUpHalf+thrustRedius, this.rocketRightEdge+thrustLength, this.rocketUpHalf-thrustRedius)
+        this.fillTriangle(this.rocketRightEdge, this.rocketUpHalf, this.rocketRightEdge+thrustLength, this.rocketUpHalf+thrustRedius, this.rocketRightEdge+thrustLength, this.rocketUpHalf-thrustRedius);
     }
 
     override update(...args: any[]): void {
