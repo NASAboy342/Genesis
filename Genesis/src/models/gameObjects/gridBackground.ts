@@ -18,15 +18,5 @@ export class GridBackground extends GameObjectBase {
             this.drawLine(0, j * cellSize, width, j * cellSize, 0xcccccc, 0.5);
         }
     }
-    drawLine(arg0: number, arg1: number, arg2: number, height: number, arg4: number, arg5: number) {
-        this.lineStyle(1, arg4, arg5);
-        this.beginPath();
-        this.moveTo(arg0, arg1);
-        this.lineTo(arg2, height);
-        this.strokePath();
-        this.closePath();
-        this.fillStyle(arg4, arg5);
-        this.fill();
-        this.closePath();
-    }
+    
 }

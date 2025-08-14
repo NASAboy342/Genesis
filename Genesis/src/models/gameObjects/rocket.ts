@@ -120,5 +120,4 @@ export class RocketSensor{
     rearLeftProximitySensors: number = this.defaultProximitySensorsValue;
     rearProximitySensors: number = this.defaultProximitySensorsValue;
     rearRightProximitySensors: number = this.defaultProximitySensorsValue;
-
 }

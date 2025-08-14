@@ -18,6 +18,17 @@ export class GameObjectBase extends Phaser.GameObjects.Graphics {
     clearGraphics(): void {
         this.clear();
     }
+    drawLine(x1: number, y1: number, x2: number, y2: number, color: number, alpha: number = 1) {
+        this.lineStyle(1, color, alpha);
+        this.beginPath();
+        this.moveTo(x1, y1);
+        this.lineTo(x2, y2);
+        this.strokePath();
+        this.closePath();
+        this.fillStyle(color, alpha);
+        this.fill();
+        this.closePath();
+    }
 
     override update(...args: any[]): void {
         super.update(...args);
