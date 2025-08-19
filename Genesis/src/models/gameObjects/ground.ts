@@ -1,15 +1,20 @@
+import { MatterCategory } from "../matterCategory";
 import { GameObjectBase } from "./gameObjectBase";
 
 export class Ground extends GameObjectBase{
     height: number = 50;
     width: number = 0;
-    constructor(scene: Phaser.Scene, x: number, y: number, width: number) {
+    constructor(scene: Phaser.Scene, x: number, y: number, width: number, matterCategory: MatterCategory) {
         super(scene, x, y);
         this.width = width;
         this.drawGround();
         scene.matter.add.gameObject(this, {
             restitution: 0.5,
             isStatic: true,
+            collisionFilter: {
+                category: matterCategory.static,
+                mask: matterCategory.rocket,
+            }
         },true);
     }
 

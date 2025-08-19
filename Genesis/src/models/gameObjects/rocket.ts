@@ -3,11 +3,13 @@ import { Color } from "../color";
 import { GameObjectBase } from "./gameObjectBase";
 import { CustomLine } from "../gyometry/customLine";
 import { ProximitySensor } from "./proximitySensor";
+import { MatterCategory } from "../matterCategory";
 
 export class Rocket extends GameObjectBase {
     
     width: number = 20;
     height: number = 50;
+    physicBodyCategory: number;
 
     readonly rocketLeftEdge: number;
     readonly rocketRightEdge: number;
@@ -20,9 +22,11 @@ export class Rocket extends GameObjectBase {
     isThrusting: boolean = false;
     isThrustingRight: boolean = false;
     isThrustingLeft: boolean = false;
+
     sensor: RocketSensor;
 
-    constructor(scene: Phaser.Scene, x: number, y: number) {
+
+    constructor(scene: Phaser.Scene, x: number, y: number, matterCategory: MatterCategory) {
         super(scene, x, y);
 
         this.generateTexture('rocket');
@@ -44,6 +48,10 @@ export class Rocket extends GameObjectBase {
                 height: this.height,
             },
             restitution: 0.5,
+            collisionFilter: {
+                category: matterCategory.rocket,
+                mask: matterCategory.static,
+            }
         });
     }
 

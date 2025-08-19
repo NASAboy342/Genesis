@@ -7,6 +7,7 @@ import { GridBackground } from "@/models/gameObjects/gridBackground";
 import { Ground } from "@/models/gameObjects/ground";
 import { Rocket } from "@/models/gameObjects/Rocket";
 import { Vector } from "matter";
+import { MatterCategory } from "@/models/matterCategory";
 
 const frameRate = ref(0);
 
@@ -18,8 +19,8 @@ class GameScene extends Phaser.Scene {
   ground: Ground;
   rockets: Rocket[] = [];  
   gridSize: number = 50;
-  
   cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
+  matterCategory: MatterCategory;
 
   constructor() {
     super({ key: "GameScene" });
@@ -28,15 +29,21 @@ class GameScene extends Phaser.Scene {
   preload() {}
 
   create() {
+    this.matterCategory = new MatterCategory(this);
     this.backgroundGrid = new GridBackground(
       this,
       mapWidth,
       mapHeight,
       this.gridSize
     );
-    this.ground = new Ground(this, mapWidth / 2, mapHeight, mapWidth);
+    const walls = this.matter.world.walls;
+    [walls.left, walls.right, walls.top, walls.bottom].forEach((w: MatterJS.BodyType) => {
+      w.collisionFilter.category = this.matterCategory.static;
+      w.collisionFilter.mask = this.matterCategory.rocket; 
+    });
+    this.ground = new Ground(this, mapWidth / 2, mapHeight, mapWidth, this.matterCategory);
     for(let i = 0; i < 1; i++) {
-      this.rockets.push(new Rocket(this, Phaser.Math.Between(0, mapWidth), Phaser.Math.Between(0, mapHeight)));
+      this.rockets.push(new Rocket(this, Phaser.Math.Between(0, mapWidth), Phaser.Math.Between(0, mapHeight), this.matterCategory));
     }
 
     this.cursorKeys = this.input.keyboard.createCursorKeys();
@@ -106,7 +113,6 @@ onMounted(() => {
               width: mapWidth,
               height: mapHeight,
             }
-            
           }
         },
     scene: GameScene,
