@@ -6,6 +6,7 @@ import { Color } from "@/models/color";
 import { GridBackground } from "@/models/gameObjects/gridBackground";
 import { Ground } from "@/models/gameObjects/ground";
 import { Rocket } from "@/models/gameObjects/Rocket";
+import { Vector } from "matter";
 
 const frameRate = ref(0);
 
@@ -58,10 +59,24 @@ class GameScene extends Phaser.Scene {
         rocket.stearRight();
       });
     }
+    let serfaces = this.getInteractiveSerfaces();
     this.rockets.forEach(rocket => {
-      rocket.update();
+      rocket.update(serfaces);
     });
     frameRate.value = this.game.loop.actualFps;
+  }
+  getInteractiveSerfaces(): Phaser.Geom.Line[] {
+    let interactiveSerfaces : Phaser.Geom.Line[] = [];
+    // world bounds
+    interactiveSerfaces.push(new Phaser.Geom.Line(0, 0, mapWidth, 0)); // top
+    interactiveSerfaces.push(new Phaser.Geom.Line(mapWidth, 0, mapWidth, mapHeight)); // right
+    interactiveSerfaces.push(new Phaser.Geom.Line(mapWidth, mapHeight, 0, mapHeight)); // bottom
+    interactiveSerfaces.push(new Phaser.Geom.Line(0, mapHeight, 0, 0)); // left
+
+    // ground
+    interactiveSerfaces = interactiveSerfaces.concat(this.ground.getSerfaces());
+
+    return interactiveSerfaces;
   }
 }
 
