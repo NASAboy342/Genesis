@@ -8,6 +8,7 @@ import { Ground } from "@/models/gameObjects/ground";
 import { Rocket } from "@/models/gameObjects/Rocket";
 import { Vector } from "matter";
 import { MatterCategory } from "@/models/matterCategory";
+import { WayPoint } from "@/models/gameObjects/wayPoint";
 
 const frameRate = ref(0);
 
@@ -21,6 +22,7 @@ class GameScene extends Phaser.Scene {
   gridSize: number = 50;
   cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
   matterCategory: MatterCategory;
+  rocketWayPoint: WayPoint;
 
   constructor() {
     super({ key: "GameScene" });
@@ -42,15 +44,26 @@ class GameScene extends Phaser.Scene {
       w.collisionFilter.mask = this.matterCategory.rocket; 
     });
     this.ground = new Ground(this, mapWidth / 2, mapHeight, mapWidth, this.matterCategory);
-    for(let i = 0; i < 1; i++) {
-      this.rockets.push(new Rocket(this, Phaser.Math.Between(0, mapWidth), Phaser.Math.Between(0, mapHeight), this.matterCategory));
+
+    let rocketStartPoint = new Phaser.Math.Vector2(mapWidth / 1.5, mapHeight- 20)
+    for(let i = 0; i < 100; i++) {
+      this.rockets.push(new Rocket(this, rocketStartPoint.x, rocketStartPoint.y, this.matterCategory));
     }
 
+    this.rocketWayPoint = new WayPoint(this, mapWidth / 2, mapHeight / 2);
     this.cursorKeys = this.input.keyboard.createCursorKeys();
 
   }
 
   update() {
+    this.listenForInput();
+    let surfaces = this.getInteractiveSerfaces();
+    this.rockets.forEach(rocket => {
+      rocket.update(surfaces, this.rocketWayPoint);
+    });
+    frameRate.value = this.game.loop.actualFps;
+  }
+  listenForInput() {
     if(this.cursorKeys.up.isDown){
       this.rockets.forEach(rocket => {
         rocket.handleThrust();
@@ -66,11 +79,6 @@ class GameScene extends Phaser.Scene {
         rocket.stearRight();
       });
     }
-    let serfaces = this.getInteractiveSerfaces();
-    this.rockets.forEach(rocket => {
-      rocket.update(serfaces);
-    });
-    frameRate.value = this.game.loop.actualFps;
   }
   getInteractiveSerfaces(): Phaser.Geom.Line[] {
     let interactiveSerfaces : Phaser.Geom.Line[] = [];

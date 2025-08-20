@@ -3,9 +3,6 @@ import { Neuron } from "./neuron";
 
 export class NeuralNetwork {
     public layers: Layer[];
-    public colorR: number = 0;
-    public colorG: number = 0;
-    public colorB: number = 0;
   
     constructor(layerSizes: number[]) {
       this.layers = [];
@@ -15,6 +12,17 @@ export class NeuralNetwork {
       }
     }
   
+    /**
+     * 
+     * @param inputs An array of input values for the neural network.
+     * The input size should match the number of neurons in the first layer.
+     * The method computes the output of the neural network by passing the inputs through each layer.
+     * 
+     * @example
+     * const nn = new NeuralNetwork([3, 5, 2]);
+     * const output = nn.feedForward([0.5, 0.2, 0.1]);
+     * @returns An array of output values from the neural network.
+     */
     public feedForward(inputs: number[]): number[] {
       let currentOutput = inputs;
       for (let layer of this.layers) {
@@ -22,6 +30,13 @@ export class NeuralNetwork {
       }
       return currentOutput;
     }
+    /**
+     * 
+     * @param mutationRate between 0 and 1, where 0 means no mutation and 1 means full mutation
+     * This method mutates the weights and biases of all neurons in the network.
+     * It iterates through each layer and calls the mutate method on each neuron.
+     * The mutation rate determines how much the weights and biases are altered.
+     */
     public mutate(mutationRate: number): void {
         for (let layer of this.layers) {
           layer.mutate(mutationRate);
@@ -71,9 +86,6 @@ export function deserializeNeuralNetwork(json: string): NeuralNetwork {
 
     const network = new NeuralNetwork([]);
     network.layers = obj.layers;
-    network.colorR = obj.colorR || 0;
-    network.colorG = obj.colorG || 0;
-    network.colorB = obj.colorB || 0;
     return network;
 }
 
