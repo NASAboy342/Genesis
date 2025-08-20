@@ -5,7 +5,7 @@ import { GameObjectBase } from "@/models/gameObjects/gameObjectBase";
 import { Color } from "@/models/color";
 import { GridBackground } from "@/models/gameObjects/gridBackground";
 import { Ground } from "@/models/gameObjects/ground";
-import { Rocket } from "@/models/gameObjects/Rocket";
+import { Rocket } from "@/models/gameObjects/rocket";
 import { Vector } from "matter";
 import { MatterCategory } from "@/models/matterCategory";
 import { WayPoint } from "@/models/gameObjects/wayPoint";
@@ -56,7 +56,7 @@ class GameScene extends Phaser.Scene {
   }
 
   update() {
-    this.listenForInput();
+    // this.listenForInput();
     let surfaces = this.getInteractiveSerfaces();
     this.rockets.forEach(rocket => {
       rocket.update(surfaces, this.rocketWayPoint);
