@@ -30,6 +30,8 @@ export class Rocket extends GameObjectBase {
     neuralNetwork: NeuralNetwork;
     neuralOutputs: number[] = [];
 
+    score: number = 0;
+
 
     constructor(scene: Phaser.Scene, x: number, y: number, matterCategory: MatterCategory, neuralNetworkAsJson: string = '') {
         super(scene, x, y);
@@ -60,11 +62,12 @@ export class Rocket extends GameObjectBase {
         });
 
         this.neuralNetwork = neuralNetworkAsJson === '' ? new NeuralNetwork([13, 9, 9, 9, 6, 3]) : deserializeNeuralNetwork(neuralNetworkAsJson);
-        this.neuralNetwork.mutate(0.1);
+        this.neuralNetwork.mutate(0.5);
     }
     //#region Update
     override update(interactiveSerfaces: Phaser.Geom.Line[], wayPoint: WayPoint, ...args: any[]): void {
         this.sensing(interactiveSerfaces, wayPoint);
+        this.scorePerformace();
         this.feedSensorsValuesIntoNeuralNetwork();
         this.excuteNeuralNetworkOutputs();
         this.syncWithPhysicalBody();
@@ -72,8 +75,56 @@ export class Rocket extends GameObjectBase {
         this.drawRocket();
         this.resetThruster();
     }
-    
     //#endregion Update
+    scorePerformace() {
+        this.scoreWhenRocketIsUpright();
+        this.scoreWhenRocketIsGettingCloserToWayPoint();
+        this.scoreWhenNothingIsTouchingOrCloseToTheFront();
+        this.scoreWhenNothingIsTouchingOrCloseToTheSides();
+        this.scoreWhenRocketIsStillInTheAirWhileNotCloseToTheWayPoint();
+        this.scoreWhenRocketNotSpinningTooFast();
+    }
+    scoreWhenRocketNotSpinningTooFast() {
+        this.physicBody.getAngularSpeed() < 0.09 ? this.score += 1 : this.score -= 1;
+    }
+    scoreWhenRocketIsStillInTheAirWhileNotCloseToTheWayPoint() {
+        if(this.sensor.rearProximitySensors.currentValue > (this.sensor.defaultProximitySensorsValue/4) && this.sensor.waypointDistance > 20) {
+            this.score += 0.5;
+        }
+    }
+    scoreWhenNothingIsTouchingOrCloseToTheSides() {
+        let isLeftCloseOrTouching = this.sensor.leftProximitySensors.currentValue < (this.sensor.defaultProximitySensorsValue/4);
+        let isRightCloseOrTouching = this.sensor.rightProximitySensors.currentValue < (this.sensor.defaultProximitySensorsValue/4);
+        if(!isLeftCloseOrTouching) {
+            this.score += 1;
+        }
+        if(isLeftCloseOrTouching) {
+            this.score -= 1;
+        }
+        if(!isRightCloseOrTouching) {
+            this.score += 1;
+        }
+        if(isRightCloseOrTouching) {
+            this.score -= 1;
+        }
+    }
+    scoreWhenNothingIsTouchingOrCloseToTheFront() {
+        let isCloseOrTouching = this.sensor.fronProximitySensors.currentValue < (this.sensor.defaultProximitySensorsValue/4);
+        if(!isCloseOrTouching) {
+            this.score += 1;
+        }
+        if(isCloseOrTouching) {
+            this.score -= 1;
+        }
+    }
+    scoreWhenRocketIsGettingCloserToWayPoint() {
+        this.score += this.sensor.getDeltaDistanceFromWayPoint();
+    }
+    scoreWhenRocketIsUpright() {
+        if (Phaser.Math.RadToDeg(this.rotation) < 90 || Phaser.Math.RadToDeg(this.rotation) > -90) {
+            this.score += 1;
+        }
+    }
 
     public drawRocket(): void {
         this.clear();
@@ -162,7 +213,7 @@ export class Rocket extends GameObjectBase {
         this.sensor.xSpeedometer = this.physicBody.getVelocity().x;
         this.sensor.ySpeedometer = this.physicBody.getVelocity().y;
 
-        this.sensor.waypointDistance = Phaser.Math.Distance.Between(this.x, this.y, waypoint.x, waypoint.y);
+        this.sensor.updateDistanceWayPoint(Phaser.Math.Distance.Between(this.x, this.y, waypoint.x, waypoint.y));
         this.sensor.waypointAngle = Phaser.Math.Angle.Wrap(Phaser.Math.Angle.Between(this.x, this.y, waypoint.x, waypoint.y) + Phaser.Math.DegToRad(-90) - this.rotation);
     }
     //#endregion Rocket sensors
@@ -195,6 +246,22 @@ export class Rocket extends GameObjectBase {
             this.stearLeft();
         }
     }
+    override destroy(fromScene?: boolean): void {
+        this.sensor.fronLeftProximitySensors.destroy();
+        this.sensor.fronProximitySensors.destroy();
+        this.sensor.fronRightProximitySensors.destroy();
+
+        this.sensor.leftProximitySensors.destroy();
+        this.sensor.rightProximitySensors.destroy();
+
+        this.sensor.rearLeftProximitySensors.destroy();
+        this.sensor.rearProximitySensors.destroy();
+        this.sensor.rearRightProximitySensors.destroy();
+
+        this.physicBody.destroy(fromScene);
+
+        super.destroy(fromScene);
+    }
 }
 
 export class RocketSensor{
@@ -211,6 +278,7 @@ export class RocketSensor{
     gyroscope: number = 0;
     ySpeedometer: number = 0;
     xSpeedometer: number = 0;
+    previousWaypointDistance: number = 0;
     waypointDistance: number = 0;
     waypointAngle: number = 0;
 
@@ -228,5 +296,12 @@ export class RocketSensor{
         this.rearRightProximitySensors = new ProximitySensor(rocket.scene, rocket ,(rocket.width/2)-1, (rocket.height/2)-1, 45, this.defaultProximitySensorsValue);
     }
 
-    
+    getDeltaDistanceFromWayPoint() {
+        return this.previousWaypointDistance - this.waypointDistance;
+    }
+
+    updateDistanceWayPoint(current: number) {
+        this.previousWaypointDistance = this.waypointDistance;
+        this.waypointDistance = current;
+    }
 }

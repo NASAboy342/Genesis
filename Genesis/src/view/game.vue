@@ -9,10 +9,12 @@ import { Rocket } from "@/models/gameObjects/rocket";
 import { Vector } from "matter";
 import { MatterCategory } from "@/models/matterCategory";
 import { WayPoint } from "@/models/gameObjects/wayPoint";
+import { Clock } from "@/models/clock";
+import { serializeNeuralNetwork } from "@/models/ai/neuralNetwork";
 
 const frameRate = ref(0);
 
-let mapWidth: number = 1000;
+let mapWidth: number = 2000;
 let mapHeight: number = 1000;
 
 class GameScene extends Phaser.Scene {
@@ -23,6 +25,10 @@ class GameScene extends Phaser.Scene {
   cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
   matterCategory: MatterCategory;
   rocketWayPoint: WayPoint;
+  clock: Clock;
+  highestScoredRocketNeuralNetWork: string = '';
+  cameraXVelocity: number = 0;
+  cameraYVelocity: number = 0;
 
   constructor() {
     super({ key: "GameScene" });
@@ -32,53 +38,90 @@ class GameScene extends Phaser.Scene {
 
   create() {
     this.matterCategory = new MatterCategory(this);
-    this.backgroundGrid = new GridBackground(
-      this,
-      mapWidth,
-      mapHeight,
-      this.gridSize
-    );
+    this.backgroundGrid = new GridBackground(this, mapWidth, mapHeight, this.gridSize);
+    this.setCollisionToWorldBounds();
+    this.ground = new Ground(this, mapWidth / 2, mapHeight, mapWidth, this.matterCategory);
+    this.spawnRockets();
+    this.rocketWayPoint = new WayPoint(this, mapWidth / 4, mapHeight / 3);
+    this.cursorKeys = this.input.keyboard.createCursorKeys();
+    this.clock = new Clock();
+  }
+  setCollisionToWorldBounds() {
     const walls = this.matter.world.walls;
     [walls.left, walls.right, walls.top, walls.bottom].forEach((w: MatterJS.BodyType) => {
       w.collisionFilter.category = this.matterCategory.static;
       w.collisionFilter.mask = this.matterCategory.rocket; 
     });
-    this.ground = new Ground(this, mapWidth / 2, mapHeight, mapWidth, this.matterCategory);
-
-    let rocketStartPoint = new Phaser.Math.Vector2(mapWidth / 1.5, mapHeight- 20)
+  }
+  spawnRockets() {
+    let rocketStartPoint = new Phaser.Math.Vector2(mapWidth / 1.2, mapHeight- 20)
     for(let i = 0; i < 100; i++) {
-      this.rockets.push(new Rocket(this, rocketStartPoint.x, rocketStartPoint.y, this.matterCategory));
+      this.rockets.push(new Rocket(this, rocketStartPoint.x, rocketStartPoint.y, this.matterCategory, this.highestScoredRocketNeuralNetWork === '' ? '' : this.highestScoredRocketNeuralNetWork));
     }
-
-    this.rocketWayPoint = new WayPoint(this, mapWidth / 2, mapHeight / 2);
-    this.cursorKeys = this.input.keyboard.createCursorKeys();
-
   }
 
+  //#region Update
   update() {
-    // this.listenForInput();
+    this.checkIfToRecycleGame()
+    this.listenForInput();
+    this.scrollCamera();
     let surfaces = this.getInteractiveSerfaces();
     this.rockets.forEach(rocket => {
       rocket.update(surfaces, this.rocketWayPoint);
     });
     frameRate.value = this.game.loop.actualFps;
+    this.clock.aging();
   }
+  
+  //#endregion Update
+  checkIfToRecycleGame() {
+    if(this.clock.ageInSec > 5){
+      this.extractHighestScoredRocketNeuralNetwork();
+      this.rockets.forEach(rocket => {
+        rocket.destroy(true);
+      });
+      this.rockets = [];
+      this.spawnRockets();
+      this.clock.reset();
+    }
+  }
+  extractHighestScoredRocketNeuralNetwork() {
+    this.highestScoredRocketNeuralNetWork = serializeNeuralNetwork(this.rockets.sort((a, b) => b.score - a.score)[0].neuralNetwork);
+  }
+  
   listenForInput() {
     if(this.cursorKeys.up.isDown){
-      this.rockets.forEach(rocket => {
-        rocket.handleThrust();
-      });
+      this.pendingCameraUp();
     }
     if(this.cursorKeys.left.isDown){
-      this.rockets.forEach(rocket => {
-        rocket.stearLeft();
-      });
+      this.pendingCameraLeft();
     }
     if(this.cursorKeys.right.isDown){
-      this.rockets.forEach(rocket => {
-        rocket.stearRight();
-      });
+      this.pendingCameraRight();
     }
+    if(this.cursorKeys.down.isDown){
+      this.pendingCameraDown();
+    }
+  }
+  scrollCamera() {
+    this.cameras.main.scrollX += this.cameraXVelocity;
+    this.cameras.main.scrollY += this.cameraYVelocity;
+    this.cameraXVelocity *= 0.95; // Dampen the velocity
+    this.cameraYVelocity *= 0.95; // Dampen the velocity
+    if (Math.abs(this.cameraXVelocity) < 0.1) this.cameraXVelocity = 0;
+    if (Math.abs(this.cameraYVelocity) < 0.1) this.cameraYVelocity = 0;
+  }
+  pendingCameraDown() {
+    this.cameraYVelocity += 1;
+  }
+  pendingCameraRight() {
+    this.cameraXVelocity += 1;
+  }
+  pendingCameraLeft() {
+    this.cameraXVelocity -= 1;
+  }
+  pendingCameraUp() {
+    this.cameraYVelocity -= 1;
   }
   getInteractiveSerfaces(): Phaser.Geom.Line[] {
     let interactiveSerfaces : Phaser.Geom.Line[] = [];
@@ -114,7 +157,7 @@ onMounted(() => {
           default: "matter", // ✅ use Matter.js
           matter: {
             gravity: { x: 0, y: 1}, // normal downward gravity
-            debug: true,
+            debug: false,
             setBounds: {
               x: 0,
               y: 0,
