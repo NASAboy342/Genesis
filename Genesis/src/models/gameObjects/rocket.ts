@@ -85,11 +85,11 @@ export class Rocket extends GameObjectBase {
         this.scoreWhenRocketNotSpinningTooFast();
     }
     scoreWhenRocketNotSpinningTooFast() {
-        this.physicBody.getAngularSpeed() < 0.09 ? this.score += 1 : this.score -= 1;
+        this.physicBody.getAngularSpeed() < 0.09 ? this.score += 1 : this.score -= 2;
     }
     scoreWhenRocketIsStillInTheAirWhileNotCloseToTheWayPoint() {
         if(this.sensor.rearProximitySensors.currentValue > (this.sensor.defaultProximitySensorsValue/4) && this.sensor.waypointDistance > 20) {
-            this.score += 0.5;
+            this.score += 0.3;
         }
     }
     scoreWhenNothingIsTouchingOrCloseToTheSides() {
@@ -99,13 +99,13 @@ export class Rocket extends GameObjectBase {
             this.score += 1;
         }
         if(isLeftCloseOrTouching) {
-            this.score -= 1;
+            this.score -= 2;
         }
         if(!isRightCloseOrTouching) {
             this.score += 1;
         }
         if(isRightCloseOrTouching) {
-            this.score -= 1;
+            this.score -= 2;
         }
     }
     scoreWhenNothingIsTouchingOrCloseToTheFront() {
@@ -114,7 +114,7 @@ export class Rocket extends GameObjectBase {
             this.score += 1;
         }
         if(isCloseOrTouching) {
-            this.score -= 1;
+            this.score -= 2;
         }
     }
     scoreWhenRocketIsGettingCloserToWayPoint() {
