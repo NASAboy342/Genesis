@@ -6,11 +6,14 @@ import { ProximitySensor } from "./proximitySensor";
 import { MatterCategory } from "../matterCategory";
 import { WayPoint } from "./wayPoint";
 import { deserializeNeuralNetwork, NeuralNetwork } from "../ai/neuralNetwork";
+import { Clock } from "../clock";
 
 export class Rocket extends GameObjectBase {
     
     width: number = 20;
     height: number = 50;
+    previousSpeed: number = 0;
+    previousPosition: Phaser.Math.Vector2;
     physicBodyCategory: number;
 
     readonly rocketLeftEdge: number;
@@ -32,10 +35,13 @@ export class Rocket extends GameObjectBase {
 
     score: number = 0;
 
+    clock: Clock;
+
 
     constructor(scene: Phaser.Scene, x: number, y: number, matterCategory: MatterCategory, neuralNetworkAsJson: string = '') {
         super(scene, x, y);
-
+        this.previousPosition = new Phaser.Math.Vector2(x, y);
+        this.clock = new Clock();;
         this.generateTexture('rocket');
 
         this.rocketLeftEdge = -this.width / 2;
@@ -66,6 +72,7 @@ export class Rocket extends GameObjectBase {
     }
     //#region Update
     override update(interactiveSerfaces: Phaser.Geom.Line[], wayPoint: WayPoint, ...args: any[]): void {
+        this.clock.aging();
         this.sensing(interactiveSerfaces, wayPoint);
         this.scorePerformace();
         this.feedSensorsValuesIntoNeuralNetwork();
@@ -83,6 +90,21 @@ export class Rocket extends GameObjectBase {
         this.scoreWhenNothingIsTouchingOrCloseToTheSides();
         this.scoreWhenRocketIsStillInTheAirWhileNotCloseToTheWayPoint();
         this.scoreWhenRocketNotSpinningTooFast();
+        this.minusScoreWhenRocketCrashed();
+    }
+    minusScoreWhenRocketCrashed() {
+        let currentSpeed = this.getCurrentSpeed();
+        let deltaVelocity = Math.abs(currentSpeed - this.previousSpeed);
+        this.previousSpeed = currentSpeed;
+        let deltaTimeInMilliSec = this.clock.deltaTimeInMilliSec;
+        let acceleration = deltaVelocity/(deltaTimeInMilliSec);
+        if(acceleration > 20){
+            this.score -= 50;
+        }
+    }
+    getCurrentSpeed() {
+        let traveledDistance = Math.abs(Phaser.Math.Distance.Between(this.x, this.y, this.previousPosition.x, this.previousPosition.y));
+        return traveledDistance / (this.clock.deltaTimeInMilliSec/1000);
     }
     scoreWhenRocketNotSpinningTooFast() {
         this.physicBody.getAngularSpeed() < 0.09 ? this.score += 1 : this.score -= 2;
@@ -176,6 +198,8 @@ export class Rocket extends GameObjectBase {
     }
 
     private syncWithPhysicalBody() {
+        this.previousPosition.x = this.x;
+        this.previousPosition.y = this.y;
         this.x = this.physicBody.x;
         this.y = this.physicBody.y;
         this.rotation = this.physicBody.rotation;

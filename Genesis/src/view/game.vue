@@ -11,11 +11,26 @@ import { MatterCategory } from "@/models/matterCategory";
 import { WayPoint } from "@/models/gameObjects/wayPoint";
 import { Clock } from "@/models/clock";
 import { serializeNeuralNetwork } from "@/models/ai/neuralNetwork";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const frameRate = ref(0);
 
 let mapWidth: number = 2000;
 let mapHeight: number = 1000;
+
+const bestNeuralNetworkJson = ref(router.currentRoute.value.query.neuralNetworkInJsonString as string || '');
+
+const copyBestNeuralNetwork = () => {
+  if (!bestNeuralNetworkJson.value || bestNeuralNetworkJson.value === '') {
+    return;
+  }
+    navigator.clipboard.writeText(bestNeuralNetworkJson.value).then(() => {
+      console.log("Neural network copied to clipboard");
+    }).catch(err => {
+      console.error("Failed to copy: ", err);
+    });
+};
 
 class GameScene extends Phaser.Scene {
   backgroundGrid: GridBackground;
@@ -26,7 +41,7 @@ class GameScene extends Phaser.Scene {
   matterCategory: MatterCategory;
   rocketWayPoint: WayPoint;
   clock: Clock;
-  highestScoredRocketNeuralNetWork: string = '';
+  highestScoredRocketNeuralNetWork: string = bestNeuralNetworkJson.value || '';
   cameraXVelocity: number = 0;
   cameraYVelocity: number = 0;
 
@@ -54,7 +69,7 @@ class GameScene extends Phaser.Scene {
     });
   }
   spawnRockets() {
-    let rocketStartPoint = new Phaser.Math.Vector2(mapWidth / 1.2, mapHeight- 20)
+    let rocketStartPoint = new Phaser.Math.Vector2(mapWidth / 1.2, mapHeight- 70)
     for(let i = 0; i < 100; i++) {
       this.rockets.push(new Rocket(this, rocketStartPoint.x, rocketStartPoint.y, this.matterCategory, this.highestScoredRocketNeuralNetWork === '' ? '' : this.highestScoredRocketNeuralNetWork));
     }
@@ -87,6 +102,7 @@ class GameScene extends Phaser.Scene {
   }
   extractHighestScoredRocketNeuralNetwork() {
     this.highestScoredRocketNeuralNetWork = serializeNeuralNetwork(this.rockets.sort((a, b) => b.score - a.score)[0].neuralNetwork);
+    bestNeuralNetworkJson.value = this.highestScoredRocketNeuralNetWork;
   }
   
   listenForInput() {
@@ -179,6 +195,7 @@ onUnmounted(() => {
   <div id="game-container"></div>
   <div class="fps-display">
     FPS: {{ frameRate }}
+    <div class="copy-button" @click="copyBestNeuralNetwork">Copy best Neural in Json</div>
   </div>
 </template>
 
@@ -195,5 +212,17 @@ onUnmounted(() => {
   left: 10px;
   background-color: transparent;;
   color: white;
+}
+.copy-button {
+  position: relative;
+  width: fit-content;
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.copy-button:hover {
+  background-color: #45a049;
 }
 </style>

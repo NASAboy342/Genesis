@@ -1,21 +1,29 @@
 export class Clock {
-    public startTime: Date;
-    public ageInSec: number;
-    public cycle: number = 0.05;
-    public lastCycle: number = 0;
-    public constructor(){
+    startTime: Date;
+    ageInSec: number;
+    ageInMilliSec: number;
+    cycle: number = 0.05;
+    lastCycle: number = 0;
+    deltaTimeInMilliSec: number = 0;
+    constructor(){
         this.startTime = new Date();
+        this.ageInMilliSec = this.getAgeInMilliSec();
     }
-    public getAge(): number{
+    getAgeInSec(): number{
         return (new Date().getTime() - this.startTime.getTime()) / 1000;
     }
-    public reset(): void{
+    getAgeInMilliSec(): number{
+        return new Date().getTime() - this.startTime.getTime();
+    }
+    reset(): void{
         this.startTime = new Date();
     }
-    public aging(): void{
-        this.ageInSec = this.getAge();
+    aging(): void{
+        this.deltaTimeInMilliSec = this.getAgeInMilliSec() - this.ageInMilliSec;
+        this.ageInMilliSec = this.getAgeInMilliSec();
+        this.ageInSec = this.getAgeInSec();
     }
-    public isRecycle(){
+    isRecycle(){
         if(this.ageInSec >= (this.lastCycle + this.cycle)){
             this.lastCycle = this.ageInSec
             return true;
