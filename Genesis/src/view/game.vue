@@ -122,7 +122,7 @@ class GameScene extends Phaser.Scene {
 
   //#endregion Update
   checkIfToRecycleGame() {
-    if (this.clock.ageInSec > 10) {
+    if (this.clock.ageInSec > 20) {
       this.extractHighestScoredRocketNeuralNetwork();
       this.rockets.forEach((rocket) => {
         rocket.destroy(true);
