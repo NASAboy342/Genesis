@@ -91,6 +91,17 @@ export class Rocket extends GameObjectBase {
         this.scoreWhenRocketIsStillInTheAirWhileNotCloseToTheWayPoint();
         this.scoreWhenRocketNotSpinningTooFast();
         this.minusScoreWhenRocketCrashed();
+        this.scoreWhenRocketApproachingCloseToWayPointSmoothly();
+    }
+    scoreWhenRocketApproachingCloseToWayPointSmoothly() {
+        let isCloseToWayPoint = this.sensor.waypointDistance < 200;
+        let isAtSlowSpeed = this.getCurrentSpeed() < 50;
+        if(isCloseToWayPoint && isAtSlowSpeed) {
+            this.score += 5;
+        }
+        if(isCloseToWayPoint && !isAtSlowSpeed) {
+            this.score -= 5;
+        }
     }
     minusScoreWhenRocketCrashed() {
         let currentSpeed = this.getCurrentSpeed();
