@@ -109,8 +109,9 @@ export class Rocket extends GameObjectBase {
         this.previousSpeed = currentSpeed;
         let deltaTimeInMilliSec = this.clock.deltaTimeInMilliSec;
         let acceleration = deltaVelocity/(deltaTimeInMilliSec);
-        if(acceleration > 20){
-            this.score -= 50;
+        let accelerationThreshold = 20;
+        if(acceleration > accelerationThreshold){
+            this.score -= (acceleration-accelerationThreshold);
         }
     }
     getCurrentSpeed() {
