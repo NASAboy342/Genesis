@@ -37,10 +37,24 @@ export class Rocket extends GameObjectBase {
 
     clock: Clock;
 
+    id: number = 0;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, matterCategory: MatterCategory, neuralNetworkAsJson: string = '') {
+    isBroken: boolean = false;
+    acceleration: number = 0;
+    accelerationThreshold: number = 40;
+
+    lastLoopCheckTimeInSec: number = 0;
+    loopCheckIntervalInSec: number = 5;
+    markLoopPosition: Phaser.Math.Vector2;
+    loopCounter: number = 0;
+
+
+
+    constructor(id: number, scene: Phaser.Scene, x: number, y: number, matterCategory: MatterCategory, neuralNetworkAsJson: string = '') {
         super(scene, x, y);
+        this.id = id;
         this.previousPosition = new Phaser.Math.Vector2(x, y);
+        this.markLoopPosition = new Phaser.Math.Vector2(x, y);
         this.clock = new Clock();;
         this.generateTexture('rocket');
 
@@ -74,15 +88,24 @@ export class Rocket extends GameObjectBase {
     override update(interactiveSerfaces: Phaser.Geom.Line[], wayPoint: WayPoint, ...args: any[]): void {
         this.clock.aging();
         this.sensing(interactiveSerfaces, wayPoint);
-        this.scorePerformace();
-        this.feedSensorsValuesIntoNeuralNetwork();
-        this.excuteNeuralNetworkOutputs();
+        if(!this.isBroken){
+            this.scorePerformace();
+            this.checkIfRocketIsBroken();
+            this.feedSensorsValuesIntoNeuralNetwork();
+            this.excuteNeuralNetworkOutputs();
+        }
         this.syncWithPhysicalBody();
         super.update(...args);
         this.drawRocket();
         this.resetThruster();
     }
     //#endregion Update
+    checkIfRocketIsBroken() {
+        if(!this.isBroken) {
+            let isCrashTooHard = this.acceleration > this.accelerationThreshold;
+            this.isBroken = isCrashTooHard;
+        }
+    }
     scorePerformace() {
         this.scoreWhenRocketIsUpright();
         this.scoreWhenRocketIsGettingCloserToWayPoint();
@@ -92,6 +115,22 @@ export class Rocket extends GameObjectBase {
         this.scoreWhenRocketNotSpinningTooFast();
         this.minusScoreWhenRocketCrashed();
         this.scoreWhenRocketApproachingCloseToWayPointSmoothly();
+        this.minusScoreWhenRocketGoingInLoops();
+    }
+    minusScoreWhenRocketGoingInLoops() {
+        if(this.clock.ageInSec - this.lastLoopCheckTimeInSec > this.loopCheckIntervalInSec) {
+            this.lastLoopCheckTimeInSec = this.clock.ageInSec;
+            this.markLoopPosition = new Phaser.Math.Vector2(this.x, this.y);
+        }else{
+            if(this.x === this.markLoopPosition.x && this.y === this.markLoopPosition.y) {
+            this.score -= 10;
+            this.loopCounter++;
+            }
+            if(this.loopCounter > 5) {
+                this.isBroken = true;
+            }
+        }
+        
     }
     scoreWhenRocketApproachingCloseToWayPointSmoothly() {
         let isCloseToWayPoint = this.sensor.waypointDistance < 200;
@@ -108,10 +147,19 @@ export class Rocket extends GameObjectBase {
         let deltaVelocity = Math.abs(currentSpeed - this.previousSpeed);
         this.previousSpeed = currentSpeed;
         let deltaTimeInMilliSec = this.clock.deltaTimeInMilliSec;
-        let acceleration = deltaVelocity/(deltaTimeInMilliSec);
-        let accelerationThreshold = 20;
-        if(acceleration > accelerationThreshold){
-            this.score -= (acceleration-accelerationThreshold);
+        this.acceleration = deltaVelocity/(deltaTimeInMilliSec);
+        let isCrashToTheLeft = this.sensor.leftProximitySensors.currentValue < this.sensor.defaultProximitySensorsValue/10;
+        let isCrashToTheRight = this.sensor.rightProximitySensors.currentValue < this.sensor.defaultProximitySensorsValue/10;
+        if(this.acceleration > this.accelerationThreshold){
+            this.score -= (this.acceleration-this.accelerationThreshold);
+        }
+        if(isCrashToTheLeft) {
+            this.score -= 10;
+            this.isBroken = true;
+        }
+        if(isCrashToTheRight) {
+            this.score -= 10;
+            this.isBroken = true;
         }
     }
     getCurrentSpeed() {
@@ -181,6 +229,12 @@ export class Rocket extends GameObjectBase {
         }
         if(this.isThrustingRight){
             this.drawThrustLeft();
+        }
+        if(this.isBroken) {
+            this.lineStyle(2, 0x000000, 1);
+            this.strokeRect(-this.width / 2 - 2, -this.height / 2 - 2, this.width + 4, this.height + 4);
+            this.lineStyle(2, 0xFFFFFF, 1);
+            this.strokeRect(-this.width / 2 - 1, -this.height / 2 - 1, this.width + 2, this.height + 2);
         }
 
     }
@@ -297,6 +351,11 @@ export class Rocket extends GameObjectBase {
         this.physicBody.destroy(fromScene);
 
         super.destroy(fromScene);
+    }
+    markAsBest() {
+        this.drawRocket();
+        this.lineStyle(2, 0xFFFF00, 1);
+        this.strokeRect(-this.width / 2 - 2, -this.height / 2 - 2, this.width + 4, this.height + 4);
     }
 }
 

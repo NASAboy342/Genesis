@@ -17,6 +17,8 @@ export class Clock {
     }
     reset(): void{
         this.startTime = new Date();
+        this.ageInSec = 0;
+        this.ageInMilliSec = 0;
     }
     aging(): void{
         this.deltaTimeInMilliSec = this.getAgeInMilliSec() - this.ageInMilliSec;

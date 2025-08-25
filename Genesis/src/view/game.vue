@@ -51,6 +51,12 @@ class GameScene extends Phaser.Scene {
   cameraXVelocity: number = 0;
   cameraYVelocity: number = 0;
 
+  previousRocketId: number = 0;
+
+  markBestRocketIntervalInSec: number = 1;
+  lastMarkBestRocketTimeInSec: number = 0;
+  bestRocketId: number = 0;
+
   constructor() {
     super({ key: "GameScene" });
   }
@@ -92,9 +98,10 @@ class GameScene extends Phaser.Scene {
       mapWidth / 1.2,
       mapHeight - 70
     );
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) {
       this.rockets.push(
         new Rocket(
+          this.previousRocketId++,
           this,
           rocketStartPoint.x,
           rocketStartPoint.y,
@@ -107,7 +114,6 @@ class GameScene extends Phaser.Scene {
     }
   }
 
-  //#region Update
   update() {
     this.checkIfToRecycleGame();
     this.listenForInput();
@@ -116,11 +122,17 @@ class GameScene extends Phaser.Scene {
     this.rockets.forEach((rocket) => {
       rocket.update(surfaces, this.rocketWayPoint);
     });
+    this.markTheBestRocket();
     frameRate.value = this.game.loop.actualFps;
     this.clock.aging();
   }
-
-  //#endregion Update
+  markTheBestRocket() {
+    if (this.clock.ageInSec - this.lastMarkBestRocketTimeInSec > this.markBestRocketIntervalInSec){
+      this.bestRocketId = this.rockets.sort((a, b) => b.score - a.score)[0].id;
+      this.lastMarkBestRocketTimeInSec = this.clock.ageInSec;
+    }
+    this.rockets.find(r => r.id === this.bestRocketId)?.markAsBest();
+  }
   checkIfToRecycleGame() {
     if (this.clock.ageInSec > 20) {
       this.extractHighestScoredRocketNeuralNetwork();
@@ -130,6 +142,7 @@ class GameScene extends Phaser.Scene {
       this.rockets = [];
       this.spawnRockets();
       this.clock.reset();
+      this.lastMarkBestRocketTimeInSec = 0;
       cyclesCompleted.value += 1;
     }
   }
