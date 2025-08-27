@@ -11,7 +11,9 @@ import { MatterCategory } from "@/models/matterCategory";
 import { WayPoint } from "@/models/gameObjects/wayPoint";
 import { Clock } from "@/models/clock";
 import { serializeNeuralNetwork } from "@/models/ai/neuralNetwork";
+import { DataBaseApiHelper } from "@/utils/NeuralNetworkApiHelper";
 import { useRouter } from "vue-router";
+import { c } from "vite/dist/node/moduleRunnerTransport.d-CXw_Ws6P";
 
 const router = useRouter();
 const frameRate = ref(0);
@@ -38,6 +40,9 @@ const copyBestNeuralNetwork = () => {
     });
 };
 
+const highestScore = ref(0);
+const highestScoreRecord = ref(0);
+
 class GameScene extends Phaser.Scene {
   backgroundGrid: GridBackground;
   ground: Ground;
@@ -56,6 +61,7 @@ class GameScene extends Phaser.Scene {
   markBestRocketIntervalInSec: number = 1;
   lastMarkBestRocketTimeInSec: number = 0;
   bestRocketId: number = 0;
+  mutationRate: number = 0.5;
 
   constructor() {
     super({ key: "GameScene" });
@@ -108,7 +114,8 @@ class GameScene extends Phaser.Scene {
           this.matterCategory,
           this.highestScoredRocketNeuralNetWork === ""
             ? ""
-            : this.highestScoredRocketNeuralNetWork
+            : this.highestScoredRocketNeuralNetWork,
+          this.mutationRate
         )
       );
     }
@@ -134,7 +141,7 @@ class GameScene extends Phaser.Scene {
     this.rockets.find(r => r.id === this.bestRocketId)?.markAsBest();
   }
   checkIfToRecycleGame() {
-    if (this.clock.ageInSec > 20) {
+    if (this.clock.ageInSec > 60 || this.rockets.every((r) => r.isBroken)) {
       this.extractHighestScoredRocketNeuralNetwork();
       this.rockets.forEach((rocket) => {
         rocket.destroy(true);
@@ -146,11 +153,24 @@ class GameScene extends Phaser.Scene {
       cyclesCompleted.value += 1;
     }
   }
-  extractHighestScoredRocketNeuralNetwork() {
-    this.highestScoredRocketNeuralNetWork = serializeNeuralNetwork(
-      this.rockets.sort((a, b) => b.score - a.score)[0].neuralNetwork
+  async extractHighestScoredRocketNeuralNetwork() {
+    let highestScoredRocket = this.rockets.sort((a, b) => b.score - a.score)[0];
+    highestScore.value = highestScoredRocket.score;
+    highestScoreRecord.value = highestScore.value > highestScoreRecord.value ? highestScore.value : highestScoreRecord.value;
+    let newHighestScoredRocketNeuralNetWork = serializeNeuralNetwork(
+      highestScoredRocket.neuralNetwork
     );
+    this.mutationRate = newHighestScoredRocketNeuralNetWork > this.highestScoredRocketNeuralNetWork ? 0.5 : 0.9;
+    this.highestScoredRocketNeuralNetWork = newHighestScoredRocketNeuralNetWork;
     bestNeuralNetworkJson.value = this.highestScoredRocketNeuralNetWork;
+    this.saveInToDataBase(this.highestScoredRocketNeuralNetWork);
+  }
+  async saveInToDataBase(highestScoredRocketNeuralNetWork: string) {
+    try {
+      const data = await DataBaseApiHelper.saveRawData(highestScoredRocketNeuralNetWork);
+    } catch (error) {
+      console.error("Failed to send neural network data:", error);
+    }
   }
 
   listenForInput() {
@@ -248,6 +268,8 @@ onUnmounted(() => {
   <div class="info-panel">
     <div class="fps-display">FPS: {{ frameRate }}</div>
     <div class="fps-display">CompletedCycles: {{ cyclesCompleted }}</div>
+    <div class="fps-display">Highest Score: {{ highestScore }}</div>
+    <div class="fps-display">Highest Score Record: {{ highestScoreRecord }}</div>
     <div class="copy-button" @click="copyBestNeuralNetwork">
       Copy best Neural in Json
     </div>

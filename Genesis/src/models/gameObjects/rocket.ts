@@ -50,7 +50,7 @@ export class Rocket extends GameObjectBase {
 
 
 
-    constructor(id: number, scene: Phaser.Scene, x: number, y: number, matterCategory: MatterCategory, neuralNetworkAsJson: string = '') {
+    constructor(id: number, scene: Phaser.Scene, x: number, y: number, matterCategory: MatterCategory, neuralNetworkAsJson: string = '', mutationRate: number = 0.5) {
         super(scene, x, y);
         this.id = id;
         this.previousPosition = new Phaser.Math.Vector2(x, y);
@@ -82,7 +82,7 @@ export class Rocket extends GameObjectBase {
         });
 
         this.neuralNetwork = neuralNetworkAsJson === '' ? new NeuralNetwork([13, 9, 9, 9, 6, 3]) : deserializeNeuralNetwork(neuralNetworkAsJson);
-        this.neuralNetwork.mutate(0.5);
+        this.neuralNetwork.mutate(mutationRate);
     }
     //#region Update
     override update(interactiveSerfaces: Phaser.Geom.Line[], wayPoint: WayPoint, ...args: any[]): void {
@@ -116,21 +116,36 @@ export class Rocket extends GameObjectBase {
         this.minusScoreWhenRocketCrashed();
         this.scoreWhenRocketApproachingCloseToWayPointSmoothly();
         this.minusScoreWhenRocketGoingInLoops();
+        this.minusScoreWhenRocketFireBothSideThrusterAtTheSameTime();
+        this.scoreWhenRocketFireOnlyOneSideThrusterAtTheSameTime();
+    }
+    scoreWhenRocketFireOnlyOneSideThrusterAtTheSameTime() {
+        if((this.isThrustingLeft && !this.isThrustingRight) || (!this.isThrustingLeft && this.isThrustingRight)) {
+            this.score += 1;
+        }
+    }
+    minusScoreWhenRocketFireBothSideThrusterAtTheSameTime() {
+        if(this.isThrustingLeft && this.isThrustingRight) {
+            this.score -= 1;
+        }
     }
     minusScoreWhenRocketGoingInLoops() {
         if(this.clock.ageInSec - this.lastLoopCheckTimeInSec > this.loopCheckIntervalInSec) {
             this.lastLoopCheckTimeInSec = this.clock.ageInSec;
             this.markLoopPosition = new Phaser.Math.Vector2(this.x, this.y);
         }else{
-            if(this.x === this.markLoopPosition.x && this.y === this.markLoopPosition.y) {
+            if(this.isCloseBy(this.x, this.markLoopPosition.x, 3) && this.isCloseBy(this.y, this.markLoopPosition.y, 3)) {
             this.score -= 10;
             this.loopCounter++;
             }
-            if(this.loopCounter > 5) {
+            if(this.loopCounter > 30) {
                 this.isBroken = true;
             }
         }
         
+    }
+    isCloseBy(axes1: number, axes2: number, threshold: number) {
+        return Math.abs(axes1 - axes2) < threshold;
     }
     scoreWhenRocketApproachingCloseToWayPointSmoothly() {
         let isCloseToWayPoint = this.sensor.waypointDistance < 200;
@@ -353,7 +368,6 @@ export class Rocket extends GameObjectBase {
         super.destroy(fromScene);
     }
     markAsBest() {
-        this.drawRocket();
         this.lineStyle(2, 0xFFFF00, 1);
         this.strokeRect(-this.width / 2 - 2, -this.height / 2 - 2, this.width + 4, this.height + 4);
     }
