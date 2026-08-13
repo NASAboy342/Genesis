@@ -7,6 +7,7 @@ import { MatterCategory } from "../matterCategory";
 import { WayPoint } from "./wayPoint";
 import { deserializeNeuralNetwork, NeuralNetwork } from "../ai/neuralNetwork";
 import { Clock } from "../clock";
+import { PerformanceScore } from "../performentScore";
 
 export class Rocket extends GameObjectBase {
     
@@ -47,6 +48,7 @@ export class Rocket extends GameObjectBase {
     loopCheckIntervalInSec: number = 5;
     markLoopPosition: Phaser.Math.Vector2;
     loopCounter: number = 0;
+    LostScore: number = 0;
 
 
 
@@ -121,12 +123,12 @@ export class Rocket extends GameObjectBase {
     }
     scoreWhenRocketFireOnlyOneSideThrusterAtTheSameTime() {
         if((this.isThrustingLeft && !this.isThrustingRight) || (!this.isThrustingLeft && this.isThrustingRight)) {
-            this.score += 1;
+            this.addScore(PerformanceScore.FireOnlyOneSideThrusterAtTheSameTime);
         }
     }
     minusScoreWhenRocketFireBothSideThrusterAtTheSameTime() {
         if(this.isThrustingLeft && this.isThrustingRight) {
-            this.score -= 1;
+            this.addScore(PerformanceScore.FireBothSideThrusterAtTheSameTime);
         }
     }
     minusScoreWhenRocketGoingInLoops() {
@@ -135,7 +137,7 @@ export class Rocket extends GameObjectBase {
             this.markLoopPosition = new Phaser.Math.Vector2(this.x, this.y);
         }else{
             if(this.isCloseBy(this.x, this.markLoopPosition.x, 3) && this.isCloseBy(this.y, this.markLoopPosition.y, 3)) {
-            this.score -= 10;
+            this.addScore(PerformanceScore.RocketIsGoingInLoop);
             this.loopCounter++;
             }
             if(this.loopCounter > 30) {
@@ -151,10 +153,10 @@ export class Rocket extends GameObjectBase {
         let isCloseToWayPoint = this.sensor.waypointDistance < 200;
         let isAtSlowSpeed = this.getCurrentSpeed() < 50;
         if(isCloseToWayPoint && isAtSlowSpeed) {
-            this.score += 5;
+            this.addScore(PerformanceScore.GettingCloserToWayPointSmoothly);
         }
         if(isCloseToWayPoint && !isAtSlowSpeed) {
-            this.score -= 5;
+            this.addScore(PerformanceScore.GettingCloserToWayPointNotSmoothly);
         }
     }
     minusScoreWhenRocketCrashed() {
@@ -166,14 +168,14 @@ export class Rocket extends GameObjectBase {
         let isCrashToTheLeft = this.sensor.leftProximitySensors.currentValue < this.sensor.defaultProximitySensorsValue/10;
         let isCrashToTheRight = this.sensor.rightProximitySensors.currentValue < this.sensor.defaultProximitySensorsValue/10;
         if(this.acceleration > this.accelerationThreshold){
-            this.score -= (this.acceleration-this.accelerationThreshold);
+            this.addScore(PerformanceScore.Crash);
         }
         if(isCrashToTheLeft) {
-            this.score -= 10;
+            this.addScore(PerformanceScore.Crash);
             this.isBroken = true;
         }
         if(isCrashToTheRight) {
-            this.score -= 10;
+            this.addScore(PerformanceScore.Crash);
             this.isBroken = true;
         }
     }
@@ -182,45 +184,52 @@ export class Rocket extends GameObjectBase {
         return traveledDistance / (this.clock.deltaTimeInMilliSec/1000);
     }
     scoreWhenRocketNotSpinningTooFast() {
-        this.physicBody.getAngularSpeed() < 0.09 ? this.score += 1 : this.score -= 2;
+        this.physicBody.getAngularSpeed() < 0.09 ? this.addScore(PerformanceScore.NotSpinningTooFast) : this.addScore(PerformanceScore.SpinningTooFast);
     }
     scoreWhenRocketIsStillInTheAirWhileNotCloseToTheWayPoint() {
         if(this.sensor.rearProximitySensors.currentValue > (this.sensor.defaultProximitySensorsValue/4) && this.sensor.waypointDistance > 20) {
-            this.score += 0.3;
+            this.addScore(PerformanceScore.WhenRocketIsStillInTheAirWhileNotCloseToTheWayPoint);
         }
     }
     scoreWhenNothingIsTouchingOrCloseToTheSides() {
         let isLeftCloseOrTouching = this.sensor.leftProximitySensors.currentValue < (this.sensor.defaultProximitySensorsValue/4);
         let isRightCloseOrTouching = this.sensor.rightProximitySensors.currentValue < (this.sensor.defaultProximitySensorsValue/4);
         if(!isLeftCloseOrTouching) {
-            this.score += 1;
+            this.addScore(PerformanceScore.NotAboutToCrash);
         }
         if(isLeftCloseOrTouching) {
-            this.score -= 2;
+            this.addScore(PerformanceScore.AboutToCrash);
         }
         if(!isRightCloseOrTouching) {
-            this.score += 1;
+            this.addScore(PerformanceScore.NotAboutToCrash);
         }
         if(isRightCloseOrTouching) {
-            this.score -= 2;
+            this.addScore(PerformanceScore.AboutToCrash);
         }
     }
     scoreWhenNothingIsTouchingOrCloseToTheFront() {
         let isCloseOrTouching = this.sensor.fronProximitySensors.currentValue < (this.sensor.defaultProximitySensorsValue/4);
         if(!isCloseOrTouching) {
-            this.score += 1;
+            this.addScore(PerformanceScore.NotAboutToCrash);
         }
         if(isCloseOrTouching) {
-            this.score -= 2;
+            this.addScore(PerformanceScore.AboutToCrash);
         }
     }
     scoreWhenRocketIsGettingCloserToWayPoint() {
-        this.score += this.sensor.getDeltaDistanceFromWayPoint();
+        if (this.sensor.getDeltaDistanceFromWayPoint() > 0){
+            this.addScore(PerformanceScore.GettingCloserToWayPoint);
+        }
     }
     scoreWhenRocketIsUpright() {
         if (Phaser.Math.RadToDeg(this.rotation) < 90 || Phaser.Math.RadToDeg(this.rotation) > -90) {
-            this.score += 1;
+            this.addScore(PerformanceScore.Upright);
         }
+    }
+
+    addScore(value: number) {
+        this.score += value;
+        this.LostScore += value < 0 ? Math.abs(value) : 0;
     }
 
     public drawRocket(): void {

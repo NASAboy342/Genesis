@@ -14,6 +14,7 @@ import { serializeNeuralNetwork } from "@/models/ai/neuralNetwork";
 import { DataBaseApiHelper } from "@/utils/NeuralNetworkApiHelper";
 import { useRouter } from "vue-router";
 import { c } from "vite/dist/node/moduleRunnerTransport.d-CXw_Ws6P";
+import { TrainingRecord } from "@/models/trainingRecord";
 
 const router = useRouter();
 const frameRate = ref(0);
@@ -62,6 +63,7 @@ class GameScene extends Phaser.Scene {
   lastMarkBestRocketTimeInSec: number = 0;
   bestRocketId: number = 0;
   mutationRate: number = 0.5;
+  records: TrainingRecord[] = [];
 
   constructor() {
     super({ key: "GameScene" });
@@ -86,7 +88,7 @@ class GameScene extends Phaser.Scene {
       this.matterCategory
     );
     this.spawnRockets();
-    this.rocketWayPoint = new WayPoint(this, mapWidth / 4, mapHeight / 3);
+    this.rocketWayPoint = new WayPoint(this, mapWidth / 1.3, mapHeight / 3);
     this.cursorKeys = this.input.keyboard.createCursorKeys();
     this.clock = new Clock();
   }
@@ -142,16 +144,31 @@ class GameScene extends Phaser.Scene {
   }
   checkIfToRecycleGame() {
     if (this.clock.ageInSec > 60 || this.rockets.every((r) => r.isBroken)) {
-      this.extractHighestScoredRocketNeuralNetwork();
+      this.recycleGame();
+    }
+  }
+  recycleGame() {
+    this.extractHighestScoredRocketNeuralNetwork();
       this.rockets.forEach((rocket) => {
         rocket.destroy(true);
       });
+      this.lastMarkBestRocketTimeInSec = 0;
+      cyclesCompleted.value += 1;
+      var thisCycleRecord = this.getThisCycleTrainingRecord();
+      this.records.push(thisCycleRecord);
       this.rockets = [];
       this.spawnRockets();
       this.clock.reset();
-      this.lastMarkBestRocketTimeInSec = 0;
-      cyclesCompleted.value += 1;
-    }
+  }
+  getThisCycleTrainingRecord(): TrainingRecord {
+    var newTrainingRecord = new TrainingRecord();
+    newTrainingRecord.cycleNumber = cyclesCompleted.value;
+    newTrainingRecord.highestScore = highestScore.value;
+    newTrainingRecord.highestScoreRecord = highestScoreRecord.value;
+    newTrainingRecord.bestNeuralNetworkJson = this.highestScoredRocketNeuralNetWork;
+    newTrainingRecord.highestScoreRocket = this.rockets.sort((a, b) => b.score - a.score)[0];
+    newTrainingRecord.LostScore = newTrainingRecord.highestScoreRocket.LostScore;
+    return newTrainingRecord;
   }
   async extractHighestScoredRocketNeuralNetwork() {
     let highestScoredRocket = this.rockets.sort((a, b) => b.score - a.score)[0];
