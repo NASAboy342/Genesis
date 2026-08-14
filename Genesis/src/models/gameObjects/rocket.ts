@@ -140,7 +140,7 @@ export class Rocket extends GameObjectBase {
             this.addScore(PerformanceScore.RocketIsGoingInLoop);
             this.loopCounter++;
             }
-            if(this.loopCounter > 30) {
+            if(this.loopCounter > 300) {
                 this.isBroken = true;
             }
         }
@@ -219,6 +219,9 @@ export class Rocket extends GameObjectBase {
     scoreWhenRocketIsGettingCloserToWayPoint() {
         if (this.sensor.getDeltaDistanceFromWayPoint() > 0){
             this.addScore(PerformanceScore.GettingCloserToWayPoint);
+        }
+        if (this.sensor.getDeltaDistanceFromWayPoint() < 0){
+            this.addScore(PerformanceScore.GettingAwayFromWayPoint);
         }
     }
     scoreWhenRocketIsUpright() {
